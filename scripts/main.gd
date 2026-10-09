@@ -116,6 +116,8 @@ func _build_room() -> void:
 	_box(self, "WindowSill", Vector3(0.18, 0.12, 2.72), Vector3(-5.72, 1.12, -1.2), Color(0.48, 0.39, 0.29), false)
 	_box(self, "WindowSillEndLeft", Vector3(0.18, 0.12, 0.12), Vector3(-5.72, 1.12, -2.52), Color(0.39, 0.31, 0.24), false)
 	_box(self, "WindowSillEndRight", Vector3(0.18, 0.12, 0.12), Vector3(-5.72, 1.12, 0.12), Color(0.39, 0.31, 0.24), false)
+	_box(self, "WindowMullionVertical", Vector3(0.08, 1.42, 0.1), Vector3(-5.78, 1.95, -1.2), Color(0.25, 0.25, 0.24), false)
+	_box(self, "WindowMullionHorizontal", Vector3(0.08, 0.1, 2.42), Vector3(-5.78, 1.95, -1.2), Color(0.25, 0.25, 0.24), false)
 	_box(self, "KitchenCounter", Vector3(2.8, 0.9, 0.75), Vector3(-3.9, 0.45, 2.5), Color(0.5, 0.5, 0.46))
 	_box(self, "Fridge", Vector3(0.85, 2.0, 0.8), Vector3(-5.0, 1.0, 3.6), Color(0.72, 0.75, 0.76))
 	_box(self, "LampStem", Vector3(0.08, 1.1, 0.08), Vector3(4.5, 1.05, 0.1), trim_mat)
