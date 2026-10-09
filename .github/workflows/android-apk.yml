@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: urban-roots-android-${{ github.ref }}
@@ -159,3 +159,13 @@ jobs:
           path: build/URBAN-ROOTS-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish standalone APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-debug-${{ github.run_number }}
+          name: URBAN-ROOTS Android debug build #${{ github.run_number }}
+          prerelease: true
+          make_latest: false
+          files: build/URBAN-ROOTS-debug.apk
+          fail_on_unmatched_files: true
