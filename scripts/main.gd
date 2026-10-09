@@ -1,6 +1,7 @@
 extends Node3D
 
 const WALK_SPEED := 4.2
+const RUN_SPEED := 6.6
 const LOOK_SENSITIVITY := 0.006
 const ROOM_SIZE := Vector3(12.0, 3.2, 12.0)
 
@@ -11,6 +12,7 @@ var right_arm: MeshInstance3D
 var left_leg: MeshInstance3D
 var right_leg: MeshInstance3D
 var walk_phase := 0.0
+var sprinting := false
 var camera_pivot: Node3D
 var camera: Camera3D
 var first_person := false
@@ -222,8 +224,20 @@ func _build_ui() -> void:
 	cam_btn.add_theme_font_size_override("font_size", 18)
 	cam_btn.pressed.connect(_toggle_camera)
 	layer.add_child(cam_btn)
+	var run_btn := Button.new()
+	run_btn.text = "БЕГ"
+	run_btn.position = Vector2(-365, -100)
+	run_btn.size = Vector2(145, 58)
+	run_btn.anchor_left = 1.0
+	run_btn.anchor_right = 1.0
+	run_btn.anchor_top = 1.0
+	run_btn.anchor_bottom = 1.0
+	run_btn.add_theme_font_size_override("font_size", 20)
+	run_btn.button_down.connect(func(): sprinting = true)
+	run_btn.button_up.connect(func(): sprinting = false)
+	layer.add_child(run_btn)
 	var help := Label.new()
-	help.text = "Левый джойстик — ходьба • свайп справа — обзор"
+	help.text = "Джойстик — ходьба • БЕГ — ускорение • свайп справа — обзор"
 	help.anchor_left = 0.5
 	help.anchor_right = 0.5
 	help.anchor_top = 1.0
@@ -290,8 +304,9 @@ func _physics_process(_delta: float) -> void:
 		var basis := Basis(Vector3.UP, yaw)
 		direction = basis * Vector3(input_dir.x, 0, input_dir.y)
 		player.rotation.y = lerp_angle(player.rotation.y, atan2(-direction.x, -direction.z), 0.2)
-	player.velocity.x = direction.x * WALK_SPEED
-	player.velocity.z = direction.z * WALK_SPEED
+	var current_speed := RUN_SPEED if sprinting else WALK_SPEED
+	player.velocity.x = direction.x * current_speed
+	player.velocity.z = direction.z * current_speed
 	if not player.is_on_floor():
 		player.velocity.y -= 18.0 * _delta
 	else:
@@ -302,7 +317,7 @@ func _physics_process(_delta: float) -> void:
 		walk_phase += _delta * horizontal_speed * 2.4
 	else:
 		walk_phase = lerpf(walk_phase, 0.0, minf(1.0, _delta * 8.0))
-	var swing := sin(walk_phase) * minf(0.65, horizontal_speed / WALK_SPEED * 0.65)
+	var swing := sin(walk_phase) * minf(0.65, horizontal_speed / RUN_SPEED * 0.65)
 	if is_instance_valid(left_leg):
 		left_leg.rotation.x = swing
 		right_leg.rotation.x = -swing
