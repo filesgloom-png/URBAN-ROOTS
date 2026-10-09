@@ -74,10 +74,24 @@ jobs:
           sed -i 's|keystore/debug_user=""|keystore/debug_user="androiddebugkey"|' export_presets.cfg
           sed -i 's|keystore/debug_password=""|keystore/debug_password="android"|' export_presets.cfg
 
+      - name: Diagnose Android export configuration
+        run: |
+          echo "=== Effective Android preset keystore settings ==="
+          grep -E '^keystore/(debug|debug_user|debug_password)=' export_presets.cfg
+          echo "=== Installed Godot Android templates ==="
+          ls -lah "$HOME/.local/share/godot/export_templates/4.5.1.stable/"
+          echo "=== Godot Android editor settings ==="
+          cat "$HOME/.config/godot/editor_settings-4.tres"
+          echo "=== Android SDK essentials ==="
+          test -x "$ANDROID_HOME/platform-tools/adb"
+          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
+          test -d "$ANDROID_HOME/platforms/android-35"
+          echo "Android SDK checks passed"
+
       - name: Export Android debug APK
         run: |
           mkdir -p build
-          godot --headless --path . --export-debug "Android" build/URBAN-ROOTS-debug.apk
+          godot --headless --verbose --path . --export-debug "Android" build/URBAN-ROOTS-debug.apk
 
       - name: Verify APK
         run: |
