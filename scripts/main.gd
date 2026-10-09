@@ -263,6 +263,7 @@ func _build_room() -> void:
 	# Road markings continue along the wider street, while the central walking route stays clear.
 	_box(self, "RoadMarkingLeft", Vector3(5.0, 0.015, 0.1), Vector3(-5.2, 0.005, 21.0), Color(0.85, 0.82, 0.68), false)
 	_box(self, "RoadMarkingRight", Vector3(5.0, 0.015, 0.1), Vector3(5.2, 0.005, 21.0), Color(0.85, 0.82, 0.68), false)
+	_build_parked_car()
 	ceiling_glow = OmniLight3D.new()
 	ceiling_glow.name = "WarmCeilingGlow"
 	ceiling_glow.position = Vector3(0, 2.85, -0.2)
@@ -271,6 +272,51 @@ func _build_room() -> void:
 	ceiling_glow.omni_range = 8.0
 	ceiling_glow.shadow_enabled = false
 	add_child(ceiling_glow)
+
+func _build_parked_car() -> void:
+	# A compact parked hatchback at the road edge, clear of the courtyard entrance and walking routes.
+	var car := Node3D.new()
+	car.name = "ParkedHatchback"
+	car.position = Vector3(7.05, 0.0, 21.0)
+	add_child(car)
+	_box(car, "CarLowerBody", Vector3(1.72, 0.56, 3.35), Vector3(0, 0.55, 0), Color(0.16, 0.34, 0.48))
+	_box(car, "CarHood", Vector3(1.62, 0.16, 0.88), Vector3(0, 0.78, -1.12), Color(0.19, 0.4, 0.55), false)
+	_box(car, "CarRearDeck", Vector3(1.58, 0.14, 0.52), Vector3(0, 0.78, 1.28), Color(0.16, 0.34, 0.48), false)
+	_box(car, "CarCabin", Vector3(1.3, 0.58, 1.55), Vector3(0, 1.08, -0.05), Color(0.12, 0.25, 0.32), false)
+	_box(car, "CarWindshield", Vector3(1.14, 0.38, 0.035), Vector3(0, 1.12, -0.84), Color(0.32, 0.53, 0.61), false)
+	_box(car, "CarRearWindow", Vector3(1.1, 0.34, 0.035), Vector3(0, 1.12, 0.73), Color(0.3, 0.49, 0.57), false)
+	for side in [-1.0, 1.0]:
+		_box(car, "CarSideWindow_" + str(side), Vector3(0.035, 0.34, 0.95), Vector3(side * 0.665, 1.12, -0.05), Color(0.3, 0.49, 0.57), false)
+		_box(car, "CarDoorHandle_" + str(side), Vector3(0.035, 0.045, 0.2), Vector3(side * 0.87, 0.62, 0.08), Color(0.72, 0.74, 0.72), false)
+		for axle_z in [-1.05, 1.05]:
+			var wheel := MeshInstance3D.new()
+			wheel.name = "CarWheel_" + str(side) + "_" + str(axle_z)
+			var wheel_mesh := CylinderMesh.new()
+			wheel_mesh.top_radius = 0.31
+			wheel_mesh.bottom_radius = 0.31
+			wheel_mesh.height = 0.2
+			wheel.mesh = wheel_mesh
+			wheel.material_override = _material(Color(0.075, 0.08, 0.085))
+			wheel.position = Vector3(side * 0.86, 0.31, axle_z)
+			wheel.rotation_degrees.z = 90.0
+			car.add_child(wheel)
+			var hub := MeshInstance3D.new()
+			hub.name = "WheelHub_" + str(side) + "_" + str(axle_z)
+			var hub_mesh := CylinderMesh.new()
+			hub_mesh.top_radius = 0.14
+			hub_mesh.bottom_radius = 0.14
+			hub_mesh.height = 0.215
+			hub.mesh = hub_mesh
+			hub.material_override = _material(Color(0.58, 0.6, 0.59))
+			hub.position = wheel.position
+			hub.position.x += side * 0.012
+			hub.rotation_degrees.z = 90.0
+			car.add_child(hub)
+	for side in [-1.0, 1.0]:
+		_box(car, "CarHeadlight_" + str(side), Vector3(0.32, 0.13, 0.045), Vector3(side * 0.52, 0.62, -1.69), Color(0.96, 0.84, 0.56), false)
+		_box(car, "CarTaillight_" + str(side), Vector3(0.28, 0.14, 0.045), Vector3(side * 0.54, 0.62, 1.69), Color(0.72, 0.12, 0.1), false)
+	_box(car, "CarFrontBumper", Vector3(1.58, 0.12, 0.12), Vector3(0, 0.34, -1.68), Color(0.24, 0.26, 0.27), false)
+	_box(car, "CarRearBumper", Vector3(1.58, 0.12, 0.12), Vector3(0, 0.34, 1.68), Color(0.24, 0.26, 0.27), false)
 
 func _build_npc_residents() -> void:
 	# First resident: a simple pedestrian who walks between two safe points in the courtyard.
