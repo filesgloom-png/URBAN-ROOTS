@@ -49,6 +49,9 @@ jobs:
         run: |
           godot --headless --path . --editor --quit
 
+      - name: Run headless gameplay smoke test
+        run: godot --headless --path . --quit-after 3
+
       - name: Export Android debug APK
         run: |
           mkdir -p build
