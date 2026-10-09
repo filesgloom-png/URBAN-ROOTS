@@ -45,15 +45,29 @@ var traffic_car: Node3D
 var traffic_direction := 1.0
 
 func _ready() -> void:
-	_build_environment()
-	_build_room()
-	_build_player()
-	_build_npc_residents()
-	_build_second_pedestrian()
-	_build_crosswalk_pedestrian()
-	_build_street_litter()
-	_build_moving_traffic()
+	# Show the interface immediately so mobile devices never sit on a blank frame
+	# while the procedural world is being assembled.
 	_build_ui()
+	if is_instance_valid(status_label):
+		status_label.text = "Загрузка района..."
+	await get_tree().process_frame
+	_build_environment()
+	await get_tree().process_frame
+	_build_room()
+	await get_tree().process_frame
+	_build_player()
+	await get_tree().process_frame
+	_build_npc_residents()
+	await get_tree().process_frame
+	_build_second_pedestrian()
+	await get_tree().process_frame
+	_build_crosswalk_pedestrian()
+	await get_tree().process_frame
+	_build_street_litter()
+	await get_tree().process_frame
+	_build_moving_traffic()
+	if is_instance_valid(status_label):
+		status_label.text = "Квартира 01  •  Исследуй пространство"
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _build_environment() -> void:
