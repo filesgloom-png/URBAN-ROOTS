@@ -214,7 +214,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_V:
 			_toggle_camera()
-	if event is InputEventMouseMotion and Input.mouse_button_pressed:
+	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		yaw -= event.relative.x * LOOK_SENSITIVITY
 		pitch = clampf(pitch - event.relative.y * LOOK_SENSITIVITY, -1.1, 0.65)
 	if event is InputEventScreenTouch:
