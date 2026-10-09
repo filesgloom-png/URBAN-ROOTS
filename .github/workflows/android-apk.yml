@@ -101,6 +101,10 @@ jobs:
         run: |
           mkdir -p "$HOME/.android"
           keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          sed -i "s|export/android/debug_keystore = .*|export/android/debug_keystore = \"$HOME/.android/debug.keystore\"|" "$HOME/.config/godot/editor_settings-4.5.tres"
+          sed -i "s|export/android/debug_keystore_pass = .*|export/android/debug_keystore_pass = \"android\"|" "$HOME/.config/godot/editor_settings-4.5.tres"
+          grep -E "export/android/debug_keystore(_pass)? =" "$HOME/.config/godot/editor_settings-4.5.tres"
+          test -s "$HOME/.android/debug.keystore"
           sed -i 's|keystore/debug=""|keystore/debug="/home/runner/.android/debug.keystore"|' export_presets.cfg
           sed -i 's|keystore/debug_user=""|keystore/debug_user="androiddebugkey"|' export_presets.cfg
           sed -i 's|keystore/debug_password=""|keystore/debug_password="android"|' export_presets.cfg
