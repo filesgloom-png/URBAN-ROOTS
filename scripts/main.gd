@@ -39,11 +39,14 @@ var tv_is_on := false
 var fridge_is_open := false
 var stamina := 100.0
 var interaction_target := ""
+var npc_residents: Array[Dictionary] = []
+var npc_status_label: Label
 
 func _ready() -> void:
 	_build_environment()
 	_build_room()
 	_build_player()
+	_build_npc_residents()
 	_build_ui()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
@@ -269,6 +272,89 @@ func _build_room() -> void:
 	ceiling_glow.shadow_enabled = false
 	add_child(ceiling_glow)
 
+func _build_npc_residents() -> void:
+	# First resident: a simple pedestrian who walks between two safe points in the courtyard.
+	var npc := CharacterBody3D.new()
+	npc.name = "CourtyardResident"
+	npc.position = Vector3(-3.2, 0.12, 13.4)
+	add_child(npc)
+	var body_shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.28
+	capsule.height = 1.65
+	body_shape.shape = capsule
+	body_shape.position.y = 0.82
+	npc.add_child(body_shape)
+	var resident_visual := Node3D.new()
+	resident_visual.name = "ResidentVisual"
+	npc.add_child(resident_visual)
+	var torso_mesh := CapsuleMesh.new()
+	torso_mesh.radius = 0.25
+	torso_mesh.height = 0.78
+	var torso := MeshInstance3D.new()
+	torso.name = "Torso"
+	torso.mesh = torso_mesh
+	torso.position.y = 1.02
+	torso.material_override = _material(Color(0.58, 0.31, 0.23))
+	resident_visual.add_child(torso)
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.19
+	head_mesh.height = 0.38
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	head.mesh = head_mesh
+	head.position.y = 1.62
+	head.material_override = _material(Color(0.73, 0.54, 0.39))
+	resident_visual.add_child(head)
+	var leg_mesh := CapsuleMesh.new()
+	leg_mesh.radius = 0.09
+	leg_mesh.height = 0.56
+	for leg_x in [-0.12, 0.12]:
+		var leg := MeshInstance3D.new()
+		leg.name = "Leg_" + str(leg_x)
+		leg.mesh = leg_mesh
+		leg.position = Vector3(leg_x, 0.38, 0)
+		leg.material_override = _material(Color(0.16, 0.19, 0.22))
+		resident_visual.add_child(leg)
+	npc_residents.append({
+		"node": npc,
+		"visual": resident_visual,
+		"points": [Vector3(-3.2, 0.12, 13.4), Vector3(3.2, 0.12, 14.2)],
+		"target": 1,
+		"speed": 1.15,
+		"phase": 0.0
+	})
+
+func _update_npc_residents(delta: float) -> void:
+	for resident in npc_residents:
+		var npc: CharacterBody3D = resident["node"]
+		var points: Array = resident["points"]
+		var target_index: int = resident["target"]
+		var target_point: Vector3 = points[target_index]
+		var to_target := target_point - npc.global_position
+		to_target.y = 0.0
+		if to_target.length() < 0.3:
+			target_index = 0 if target_index == 1 else 1
+			resident["target"] = target_index
+			to_target = points[target_index] - npc.global_position
+			to_target.y = 0.0
+		if to_target.length() > 0.05:
+			var direction := to_target.normalized()
+			npc.velocity.x = direction.x * float(resident["speed"])
+			npc.velocity.z = direction.z * float(resident["speed"])
+			npc.rotation.y = atan2(-direction.x, -direction.z)
+		else:
+			npc.velocity.x = 0.0
+			npc.velocity.z = 0.0
+		if not npc.is_on_floor():
+			npc.velocity.y -= 18.0 * delta
+		else:
+			npc.velocity.y = -0.1
+		npc.move_and_slide()
+		resident["phase"] = float(resident["phase"]) + delta * 5.0
+		var visual: Node3D = resident["visual"]
+		visual.position.y = absf(sin(float(resident["phase"]))) * 0.025
+
 func _build_player() -> void:
 	player = CharacterBody3D.new()
 	player.name = "Player"
@@ -376,6 +462,13 @@ func _build_ui() -> void:
 	apartment_zone_label.add_theme_font_size_override("font_size", 16)
 	apartment_zone_label.add_theme_color_override("font_color", Color(0.93, 0.82, 0.58))
 	layer.add_child(apartment_zone_label)
+	npc_status_label = Label.new()
+	npc_status_label.name = "ResidentStatus"
+	npc_status_label.text = "ЖИТЕЛЬ ДВОРА  •  ПРОГУЛКА"
+	npc_status_label.position = Vector2(36, 99)
+	npc_status_label.add_theme_font_size_override("font_size", 14)
+	npc_status_label.add_theme_color_override("font_color", Color(0.82, 0.78, 0.65))
+	layer.add_child(npc_status_label)
 	stamina_label = Label.new()
 	stamina_label.name = "StaminaStatus"
 	stamina_label.text = "ЭНЕРГИЯ  •  100%"
@@ -591,6 +684,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		pitch = clampf(pitch - delta.y * LOOK_SENSITIVITY, -1.1, 0.65)
 
 func _physics_process(_delta: float) -> void:
+	_update_npc_residents(_delta)
 	if not is_instance_valid(player):
 		return
 	var input_dir := Vector2(
