@@ -45,6 +45,10 @@ jobs:
           convert icon.svg -resize 432x432! icon-foreground.png
           convert -size 432x432 xc:'#10251f' icon-background.png
           file icon.png icon-foreground.png icon-background.png
+          identify -format "%f: %wx%h PNG\n" icon.png icon-foreground.png icon-background.png
+          test -s icon.png
+          test -s icon-foreground.png
+          test -s icon-background.png
 
       - name: Install Godot 4.5.1
         run: |
@@ -56,6 +60,17 @@ jobs:
           unzip -q /tmp/godot-templates.tpz -d /tmp/godot-templates
           cp -a /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/4.5.1.stable/"
           godot --version
+
+      - name: Import project assets before Android export
+        run: |
+          echo "=== Generated launcher PNG files ==="
+          identify -format "%f: %wx%h PNG\n" icon.png icon-foreground.png icon-background.png
+          test -s icon.png
+          test -s icon-foreground.png
+          test -s icon-background.png
+          godot --headless --editor --path . --import --quit
+          echo "=== Confirm imported launcher resources ==="
+          find .godot/imported -maxdepth 1 -type f -printf "%f\\n" | sort | head -n 40
 
       - name: Configure Godot Android export paths
         run: |
