@@ -22,6 +22,7 @@ var joystick_vector := Vector2.ZERO
 var look_finger := -1
 var look_last := Vector2.ZERO
 var status_label: Label
+var movement_label: Label
 
 func _ready() -> void:
 	_build_environment()
@@ -225,6 +226,25 @@ func _build_ui() -> void:
 	status_label.add_theme_font_size_override("font_size", 15)
 	status_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.84))
 	layer.add_child(status_label)
+	var motion_panel := ColorRect.new()
+	motion_panel.name = "MovementStatusPanel"
+	motion_panel.color = Color(0.025, 0.04, 0.055, 0.72)
+	motion_panel.anchor_left = 1.0
+	motion_panel.anchor_right = 1.0
+	motion_panel.position = Vector2(-230, 18)
+	motion_panel.size = Vector2(210, 58)
+	layer.add_child(motion_panel)
+	movement_label = Label.new()
+	movement_label.name = "MovementStatus"
+	movement_label.text = "ХОДЬБА  •  4.2"
+	movement_label.anchor_left = 1.0
+	movement_label.anchor_right = 1.0
+	movement_label.position = Vector2(-220, 34)
+	movement_label.size = Vector2(190, 28)
+	movement_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	movement_label.add_theme_font_size_override("font_size", 18)
+	movement_label.add_theme_color_override("font_color", Color(0.72, 0.9, 0.82))
+	layer.add_child(movement_label)
 	var joystick := Control.new()
 	joystick.name = "MovementJoystick"
 	joystick.set_script(load("res://scripts/joystick.gd"))
@@ -325,6 +345,9 @@ func _physics_process(_delta: float) -> void:
 		direction = basis * Vector3(input_dir.x, 0, input_dir.y)
 		player.rotation.y = lerp_angle(player.rotation.y, atan2(-direction.x, -direction.z), 0.2)
 	var current_speed := RUN_SPEED if sprinting else WALK_SPEED
+	if is_instance_valid(movement_label):
+		movement_label.text = "БЕГ  •  6.6" if sprinting else "ХОДЬБА  •  4.2"
+		movement_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.38) if sprinting else Color(0.72, 0.9, 0.82))
 	player.velocity.x = direction.x * current_speed
 	player.velocity.z = direction.z * current_speed
 	if not player.is_on_floor():
