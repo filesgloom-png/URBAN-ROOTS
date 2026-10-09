@@ -91,11 +91,24 @@ jobs:
           grep -E 'export/android/(android_sdk_path|java_sdk_path)' "$HOME/.config/godot/editor_settings-4.5.tres"
 
       - name: Validate project scripts
+        shell: bash
         run: |
-          godot --headless --path . --editor --quit
+          set -o pipefail
+          godot --headless --verbose --path . --editor --quit 2>&1 | tee /tmp/godot-script-validation.log
+          if grep -E "SCRIPT ERROR:|Parse Error:|Failed to load script" /tmp/godot-script-validation.log; then
+            echo "Godot reported a script loading or parse error."
+            exit 1
+          fi
 
       - name: Run headless gameplay smoke test
-        run: godot --headless --path . --quit-after 3
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --verbose --path . --quit-after 3 2>&1 | tee /tmp/godot-gameplay-smoke.log
+          if grep -E "SCRIPT ERROR:|Parse Error:|Failed to load script" /tmp/godot-gameplay-smoke.log; then
+            echo "Gameplay smoke test found a script loading or parse error."
+            exit 1
+          fi
 
       - name: Prepare Android debug keystore
         run: |
