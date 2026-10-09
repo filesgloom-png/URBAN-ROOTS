@@ -50,6 +50,7 @@ func _ready() -> void:
 	_build_player()
 	_build_npc_residents()
 	_build_second_pedestrian()
+	_build_crosswalk_pedestrian()
 	_build_moving_traffic()
 	_build_ui()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -365,6 +366,16 @@ func _build_moving_traffic() -> void:
 func _update_moving_traffic(delta: float) -> void:
 	if not is_instance_valid(traffic_car):
 		return
+	var crossing_occupied := false
+	for resident in npc_residents:
+		if not bool(resident.get("crossing", false)):
+			continue
+		var pedestrian: CharacterBody3D = resident["node"]
+		if absf(pedestrian.global_position.x - traffic_car.global_position.x) < 3.2 and absf(pedestrian.global_position.z - traffic_car.global_position.z) < 2.2:
+			crossing_occupied = true
+			break
+	if crossing_occupied:
+		return
 	traffic_car.position.x += traffic_direction * 1.8 * delta
 	if traffic_car.position.x >= 5.6:
 		traffic_car.position.x = 5.6
@@ -426,6 +437,60 @@ func _build_second_pedestrian() -> void:
 		"target": 1,
 		"speed": 0.85,
 		"phase": 1.4
+	})
+
+func _build_crosswalk_pedestrian() -> void:
+	# A resident crosses the marked road; traffic yields while the crossing is occupied.
+	var npc := CharacterBody3D.new()
+	npc.name = "CrosswalkPedestrian"
+	npc.position = Vector3(3.5, 0.12, 18.35)
+	add_child(npc)
+	var body_shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.25
+	capsule.height = 1.6
+	body_shape.shape = capsule
+	body_shape.position.y = 0.8
+	npc.add_child(body_shape)
+	var visual := Node3D.new()
+	visual.name = "CrosswalkPedestrianVisual"
+	npc.add_child(visual)
+	var torso_mesh := CapsuleMesh.new()
+	torso_mesh.radius = 0.22
+	torso_mesh.height = 0.72
+	var torso := MeshInstance3D.new()
+	torso.name = "Torso"
+	torso.mesh = torso_mesh
+	torso.position.y = 0.98
+	torso.material_override = _material(Color(0.65, 0.48, 0.18))
+	visual.add_child(torso)
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.18
+	head_mesh.height = 0.36
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	head.mesh = head_mesh
+	head.position.y = 1.58
+	head.material_override = _material(Color(0.72, 0.51, 0.37))
+	visual.add_child(head)
+	var leg_mesh := CapsuleMesh.new()
+	leg_mesh.radius = 0.085
+	leg_mesh.height = 0.54
+	for leg_x in [-0.11, 0.11]:
+		var leg := MeshInstance3D.new()
+		leg.name = "Leg_" + str(leg_x)
+		leg.mesh = leg_mesh
+		leg.position = Vector3(leg_x, 0.35, 0)
+		leg.material_override = _material(Color(0.16, 0.18, 0.2))
+		visual.add_child(leg)
+	npc_residents.append({
+		"node": npc,
+		"visual": visual,
+		"points": [Vector3(3.5, 0.12, 18.35), Vector3(3.5, 0.12, 23.0)],
+		"target": 1,
+		"speed": 0.72,
+		"phase": 2.2,
+		"crossing": true
 	})
 
 func _build_npc_residents() -> void:
@@ -490,7 +555,7 @@ func _update_npc_residents(delta: float) -> void:
 		var to_target := target_point - npc.global_position
 		to_target.y = 0.0
 		var player_nearby := is_instance_valid(player) and npc.global_position.distance_to(player.global_position) < 1.9
-		var car_nearby := is_instance_valid(traffic_car) and npc.global_position.distance_to(traffic_car.global_position) < 5.2
+		var car_nearby := is_instance_valid(traffic_car) and not bool(resident.get("crossing", false)) and npc.global_position.distance_to(traffic_car.global_position) < 5.2
 		if player_nearby:
 			var toward_player := player.global_position - npc.global_position
 			toward_player.y = 0.0
