@@ -17,7 +17,7 @@ var camera_pivot: Node3D
 var camera: Camera3D
 var first_person := false
 var pitch := -0.12
-var yaw := 0.0
+var yaw := PI
 var joystick_vector := Vector2.ZERO
 var look_finger := -1
 var look_last := Vector2.ZERO
@@ -630,7 +630,7 @@ func _update_npc_residents(delta: float) -> void:
 func _build_player() -> void:
 	player = CharacterBody3D.new()
 	player.name = "Player"
-	player.position = Vector3(0, 0.12, 3.5)
+	player.position = Vector3(0, 0.12, 3.35)
 	add_child(player)
 	avatar_root = Node3D.new()
 	avatar_root.name = "Avatar"
@@ -771,14 +771,14 @@ func _build_ui() -> void:
 	joystick.name = "MovementJoystick"
 	joystick.set_script(load("res://scripts/joystick.gd"))
 	joystick.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	joystick.position = Vector2(34, -194)
-	joystick.size = Vector2(174, 174)
+	joystick.position = Vector2(24, -176)
+	joystick.size = Vector2(152, 152)
 	layer.add_child(joystick)
 	joystick.value_changed.connect(_on_joystick_value_changed)
 	var cam_btn := Button.new()
 	cam_btn.text = "КАМЕРА"
-	cam_btn.position = Vector2(-190, -100)
-	cam_btn.size = Vector2(160, 58)
+	cam_btn.position = Vector2(-142, -82)
+	cam_btn.size = Vector2(118, 54)
 	cam_btn.anchor_left = 1.0
 	cam_btn.anchor_right = 1.0
 	cam_btn.anchor_top = 1.0
@@ -788,8 +788,8 @@ func _build_ui() -> void:
 	layer.add_child(cam_btn)
 	var run_btn := Button.new()
 	run_btn.text = "БЕГ"
-	run_btn.position = Vector2(-365, -100)
-	run_btn.size = Vector2(145, 58)
+	run_btn.position = Vector2(-270, -82)
+	run_btn.size = Vector2(118, 54)
 	run_btn.anchor_left = 1.0
 	run_btn.anchor_right = 1.0
 	run_btn.anchor_top = 1.0
@@ -801,8 +801,8 @@ func _build_ui() -> void:
 	interact_button = Button.new()
 	interact_button.name = "InteractButton"
 	interact_button.text = "ДЕЙСТВИЕ"
-	interact_button.position = Vector2(-535, -100)
-	interact_button.size = Vector2(155, 58)
+	interact_button.position = Vector2(-398, -82)
+	interact_button.size = Vector2(118, 54)
 	interact_button.anchor_left = 1.0
 	interact_button.anchor_right = 1.0
 	interact_button.anchor_top = 1.0
@@ -818,8 +818,8 @@ func _build_ui() -> void:
 	interaction_hint.anchor_right = 0.5
 	interaction_hint.anchor_top = 1.0
 	interaction_hint.anchor_bottom = 1.0
-	interaction_hint.position = Vector2(-230, -62)
-	interaction_hint.size = Vector2(460, 24)
+	interaction_hint.position = Vector2(-230, -54)
+	interaction_hint.size = Vector2(460, 22)
 	interaction_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	interaction_hint.add_theme_font_size_override("font_size", 16)
 	interaction_hint.add_theme_color_override("font_color", Color(0.96, 0.86, 0.62))
@@ -830,8 +830,8 @@ func _build_ui() -> void:
 	help.anchor_right = 0.5
 	help.anchor_top = 1.0
 	help.anchor_bottom = 1.0
-	help.position = Vector2(-270, -32)
-	help.size = Vector2(540, 24)
+	help.position = Vector2(-270, -27)
+	help.size = Vector2(540, 20)
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	help.add_theme_font_size_override("font_size", 14)
 	layer.add_child(help)
@@ -916,11 +916,23 @@ func _interact_with_target() -> void:
 			if is_instance_valid(status_label):
 				status_label.text = "Остановка: общественный транспорт появится в следующем этапе"
 		"door":
-			door_is_open = not door_is_open
-			if is_instance_valid(door_pivot):
-				door_pivot.rotation.y = -1.35 if door_is_open else 0.0
-			if is_instance_valid(status_label):
-				status_label.text = "Дверь открыта — выходи во двор" if door_is_open else "Входная дверь закрыта"
+			if not door_is_open:
+				door_is_open = true
+				if is_instance_valid(door_pivot):
+					door_pivot.rotation.y = -1.35
+				# Mobile prototype: tapping the entrance action also carries the player
+				# through the doorway so the exit is reliable even with awkward touch controls.
+				if is_instance_valid(player) and player.global_position.z < 6.2:
+					player.global_position = Vector3(0.0, 0.12, 7.45)
+					player.velocity = Vector3.ZERO
+				if is_instance_valid(status_label):
+					status_label.text = "Ты вышел во двор"
+			else:
+				door_is_open = false
+				if is_instance_valid(door_pivot):
+					door_pivot.rotation.y = 0.0
+				if is_instance_valid(status_label):
+					status_label.text = "Входная дверь закрыта"
 	_update_interaction_target()
 
 func _toggle_camera() -> void:
@@ -936,8 +948,8 @@ func _set_camera_mode() -> void:
 		camera.position = Vector3(0, 0.12, 0.04)
 		camera.fov = 78.0
 	else:
-		camera.position = Vector3(0, 1.15, 4.6)
-		camera.fov = 68.0
+		camera.position = Vector3(0, 0.85, 3.25)
+		camera.fov = 72.0
 	camera.rotation = Vector3.ZERO
 
 func _unhandled_input(event: InputEvent) -> void:
