@@ -51,6 +51,7 @@ func _ready() -> void:
 	_build_npc_residents()
 	_build_second_pedestrian()
 	_build_crosswalk_pedestrian()
+	_build_street_litter()
 	_build_moving_traffic()
 	_build_ui()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -362,6 +363,18 @@ func _build_moving_traffic() -> void:
 	_box(self, "BusStopSymbol", Vector3(0.2, 0.3, 0.025), Vector3(8.25, 2.15, 22.145), Color(0.9, 0.88, 0.78), false)
 	_box(self, "StreetBenchSeat", Vector3(1.55, 0.12, 0.42), Vector3(7.55, 0.48, 22.6), Color(0.39, 0.27, 0.18), false)
 	_box(self, "StreetBenchBack", Vector3(1.55, 0.62, 0.1), Vector3(7.55, 0.81, 22.78), Color(0.39, 0.27, 0.18), false)
+
+func _build_street_litter() -> void:
+	# Small city props around the sidewalk, away from the main crossing and walkable center.
+	_box(self, "StreetPlanterLeft", Vector3(0.95, 0.42, 0.72), Vector3(-8.7, 0.21, 22.8), Color(0.38, 0.3, 0.24))
+	_box(self, "StreetPlanterLeftShrub", Vector3(0.76, 0.55, 0.54), Vector3(-8.7, 0.64, 22.8), Color(0.19, 0.37, 0.22), false)
+	_box(self, "StreetPlanterRight", Vector3(0.95, 0.42, 0.72), Vector3(8.8, 0.21, 24.0), Color(0.38, 0.3, 0.24))
+	_box(self, "StreetPlanterRightShrub", Vector3(0.76, 0.55, 0.54), Vector3(8.8, 0.64, 24.0), Color(0.19, 0.37, 0.22), false)
+	_box(self, "StreetTrashBinBody", Vector3(0.48, 0.78, 0.48), Vector3(-8.2, 0.39, 19.6), Color(0.25, 0.32, 0.31))
+	_box(self, "StreetTrashBinLid", Vector3(0.54, 0.07, 0.54), Vector3(-8.2, 0.815, 19.6), Color(0.16, 0.21, 0.21), false)
+	_box(self, "ShopAwning", Vector3(2.0, 0.16, 0.82), Vector3(12.8, 2.1, 20.8), Color(0.58, 0.29, 0.19), false)
+	_box(self, "ShopSignPanel", Vector3(1.5, 0.38, 0.08), Vector3(12.8, 1.82, 21.34), Color(0.13, 0.2, 0.22), false)
+	_box(self, "ShopSignAccent", Vector3(0.78, 0.045, 0.025), Vector3(12.8, 1.82, 21.285), Color(0.9, 0.75, 0.43), false)
 
 func _update_moving_traffic(delta: float) -> void:
 	if not is_instance_valid(traffic_car):
@@ -823,7 +836,8 @@ func _update_interaction_target() -> void:
 		"bed": player.global_position.distance_to(Vector3(-3.4, 0.7, -3.1)),
 		"sofa": player.global_position.distance_to(Vector3(2.8, 0.7, 1.5)),
 		"fridge": player.global_position.distance_to(Vector3(-5.0, 1.0, 3.6)),
-		"door": player.global_position.distance_to(Vector3(0.0, 1.25, 5.65))
+		"door": player.global_position.distance_to(Vector3(0.0, 1.25, 5.65)),
+		"bus_stop": player.global_position.distance_to(Vector3(8.25, 1.0, 22.2))
 	}
 	var nearest_distance := 2.25
 	for target in distances:
@@ -846,6 +860,8 @@ func _update_interaction_target() -> void:
 				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("закрыть холодильник" if fridge_is_open else "открыть холодильник")
 			"door":
 				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("закрыть входную дверь" if door_is_open else "открыть дверь и выйти во двор")
+			"bus_stop":
+				interaction_hint.text = "Остановка автобуса: транспорт пока не ходит по маршруту"
 			_:
 				interaction_hint.text = "Подойди к выключателю или телевизору"
 
@@ -882,6 +898,9 @@ func _interact_with_target() -> void:
 				fridge_visual.material_override = _material(Color(0.42, 0.49, 0.52) if fridge_is_open else Color(0.72, 0.75, 0.76))
 			if is_instance_valid(status_label):
 				status_label.text = "Холодильник открыт" if fridge_is_open else "Холодильник закрыт"
+		"bus_stop":
+			if is_instance_valid(status_label):
+				status_label.text = "Остановка: общественный транспорт появится в следующем этапе"
 		"door":
 			door_is_open = not door_is_open
 			if is_instance_valid(door_pivot):
