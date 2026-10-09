@@ -51,8 +51,7 @@ jobs:
 
       - name: Export Android debug APK
         env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
+          ANDROID_SDK_ROOT: ${{ runner.temp }}/android-sdk
         run: |
           mkdir -p build
           godot --headless --path . --export-debug "Android" build/URBAN-ROOTS-debug.apk
