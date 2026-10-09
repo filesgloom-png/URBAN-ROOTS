@@ -137,7 +137,14 @@ jobs:
       - name: Export Android debug APK
         run: |
           mkdir -p build
-          godot --headless --verbose --path . --export-debug "Android" build/URBAN-ROOTS-debug.apk
+          echo "=== Android SDK manager and Gradle diagnostics ==="
+          find "$ANDROID_HOME/cmdline-tools" -maxdepth 3 -type f -name sdkmanager -print
+          find "$ANDROID_HOME/build-tools/35.0.0" -maxdepth 1 -type f -printf "%f\\n" | sort | head -n 80
+          command -v gradle || true
+          echo "=== Export with Godot editor verbose logging ==="
+          godot --headless --verbose --editor --path . --quit 2>&1 | tee /tmp/godot-export-precheck.log
+          echo "=== Export APK ==="
+          godot --headless --verbose --path . --export-debug "Android" build/URBAN-ROOTS-debug.apk 2>&1 | tee /tmp/godot-android-export.log
 
       - name: Verify APK
         run: |
