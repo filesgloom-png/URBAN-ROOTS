@@ -3,6 +3,7 @@ extends Node3D
 const WALK_SPEED := 4.2
 const LOOK_SENSITIVITY := 0.006
 const ROOM_SIZE := Vector3(12.0, 3.2, 12.0)
+const JOYSTICK_RADIUS := 72.0
 
 var player: CharacterBody3D
 var camera_pivot: Node3D
@@ -10,11 +11,13 @@ var camera: Camera3D
 var first_person := false
 var pitch := -0.12
 var yaw := 0.0
-var touch_move := Vector2.ZERO
+var joystick_vector := Vector2.ZERO
+var joystick_center := Vector2.ZERO
+var joystick_knob := Vector2.ZERO
+var joystick_touch_index := -1
 var look_finger := -1
 var look_last := Vector2.ZERO
 var status_label: Label
-var touch_buttons: Dictionary = {}
 
 func _ready() -> void:
 	_build_environment()
@@ -152,10 +155,18 @@ func _build_ui() -> void:
 	status_label.add_theme_font_size_override("font_size", 15)
 	status_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.84))
 	layer.add_child(status_label)
-	_add_button(layer, "↑", Vector2(98, -142), "forward")
-	_add_button(layer, "↓", Vector2(98, -58), "back")
-	_add_button(layer, "←", Vector2(30, -100), "left")
-	_add_button(layer, "→", Vector2(166, -100), "right")
+	var joystick := Control.new()
+	joystick.name = "MovementJoystick"
+	joystick.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	joystick.position = Vector2(34, -194)
+	joystick.size = Vector2(174, 174)
+	joystick.mouse_filter = Control.MOUSE_FILTER_STOP
+	joystick.draw.connect(_draw_joystick.bind(joystick))
+	joystick.gui_input.connect(_on_joystick_input)
+	layer.add_child(joystick)
+	joystick_center = joystick.size / 2.0
+	joystick_knob = joystick_center
+	joystick.queue_redraw()
 	var cam_btn := Button.new()
 	cam_btn.text = "КАМЕРА"
 	cam_btn.position = Vector2(-190, -100)
@@ -168,30 +179,58 @@ func _build_ui() -> void:
 	cam_btn.pressed.connect(_toggle_camera)
 	layer.add_child(cam_btn)
 	var help := Label.new()
-	help.text = "WASD / стрелки • мышь или свайп — обзор"
+	help.text = "Левый джойстик — ходьба • свайп справа — обзор"
 	help.anchor_left = 0.5
 	help.anchor_right = 0.5
 	help.anchor_top = 1.0
 	help.anchor_bottom = 1.0
-	help.position = Vector2(-220, -32)
-	help.size = Vector2(440, 24)
+	help.position = Vector2(-270, -32)
+	help.size = Vector2(540, 24)
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	help.add_theme_font_size_override("font_size", 14)
 	layer.add_child(help)
 
-func _add_button(layer: CanvasLayer, caption: String, offset: Vector2, action: String) -> void:
-	var button := Button.new()
-	button.text = caption
-	button.size = Vector2(62, 62)
-	button.anchor_left = 0.0
-	button.anchor_right = 0.0
-	button.anchor_top = 1.0
-	button.anchor_bottom = 1.0
-	button.position = Vector2(28, -20) + offset
-	button.add_theme_font_size_override("font_size", 26)
-	button.button_down.connect(func(): touch_buttons[action] = true)
-	button.button_up.connect(func(): touch_buttons[action] = false)
-	layer.add_child(button)
+func _draw_joystick(control: Control) -> void:
+	var center := control.size / 2.0
+	control.draw_circle(center, JOYSTICK_RADIUS, Color(0.04, 0.06, 0.08, 0.48))
+	control.draw_arc(center, JOYSTICK_RADIUS, 0.0, TAU, 64, Color(0.78, 0.84, 0.85, 0.8), 3.0, true)
+	control.draw_circle(joystick_knob, 31.0, Color(0.55, 0.72, 0.76, 0.9))
+	control.draw_arc(joystick_knob, 31.0, 0.0, TAU, 48, Color(0.94, 0.96, 0.92, 0.95), 2.0, true)
+
+func _on_joystick_input(event: InputEvent) -> void:
+	var control := get_node("MobileUI/MovementJoystick") as Control
+	if event is InputEventScreenTouch:
+		if event.pressed and joystick_touch_index == -1:
+			joystick_touch_index = event.index
+			_update_joystick(event.position - control.global_position, control)
+		elif not event.pressed and event.index == joystick_touch_index:
+			joystick_touch_index = -1
+			joystick_vector = Vector2.ZERO
+			joystick_knob = joystick_center
+			control.queue_redraw()
+	elif event is InputEventScreenDrag and event.index == joystick_touch_index:
+		_update_joystick(event.position - control.global_position, control)
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			joystick_touch_index = -2
+			_update_joystick(event.position, control)
+		else:
+			joystick_touch_index = -1
+			joystick_vector = Vector2.ZERO
+			joystick_knob = joystick_center
+			control.queue_redraw()
+	elif event is InputEventMouseMotion and joystick_touch_index == -2 and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_update_joystick(event.position, control)
+
+func _update_joystick(local_position: Vector2, control: Control) -> void:
+	var offset := local_position - joystick_center
+	if offset.length() > JOYSTICK_RADIUS:
+		offset = offset.normalized() * JOYSTICK_RADIUS
+	joystick_knob = joystick_center + offset
+	joystick_vector = Vector2(offset.x / JOYSTICK_RADIUS, offset.y / JOYSTICK_RADIUS)
+	if joystick_vector.length() < 0.12:
+		joystick_vector = Vector2.ZERO
+	control.queue_redraw()
 
 func _toggle_camera() -> void:
 	first_person = not first_person
@@ -215,8 +254,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_V:
 			_toggle_camera()
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		yaw -= event.relative.x * LOOK_SENSITIVITY
-		pitch = clampf(pitch - event.relative.y * LOOK_SENSITIVITY, -1.1, 0.65)
+		if event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
+			yaw -= event.relative.x * LOOK_SENSITIVITY
+			pitch = clampf(pitch - event.relative.y * LOOK_SENSITIVITY, -1.1, 0.65)
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
@@ -234,9 +274,11 @@ func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(player):
 		return
 	var input_dir := Vector2(
-		float(Input.is_action_pressed("move_right") or touch_buttons.get("right", false)) - float(Input.is_action_pressed("move_left") or touch_buttons.get("left", false)),
-		float(Input.is_action_pressed("move_back") or touch_buttons.get("back", false)) - float(Input.is_action_pressed("move_forward") or touch_buttons.get("forward", false))
+		float(Input.is_action_pressed("move_right")) - float(Input.is_action_pressed("move_left")),
+		float(Input.is_action_pressed("move_back")) - float(Input.is_action_pressed("move_forward"))
 	)
+	if joystick_vector.length() > 0.05:
+		input_dir = joystick_vector
 	var direction := Vector3.ZERO
 	if input_dir.length() > 0.05:
 		input_dir = input_dir.normalized()
