@@ -41,12 +41,15 @@ var stamina := 100.0
 var interaction_target := ""
 var npc_residents: Array[Dictionary] = []
 var npc_status_label: Label
+var traffic_car: Node3D
+var traffic_direction := 1.0
 
 func _ready() -> void:
 	_build_environment()
 	_build_room()
 	_build_player()
 	_build_npc_residents()
+	_build_moving_traffic()
 	_build_ui()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
@@ -317,6 +320,51 @@ func _build_parked_car() -> void:
 		_box(car, "CarTaillight_" + str(side), Vector3(0.28, 0.14, 0.045), Vector3(side * 0.54, 0.62, 1.69), Color(0.72, 0.12, 0.1), false)
 	_box(car, "CarFrontBumper", Vector3(1.58, 0.12, 0.12), Vector3(0, 0.34, -1.68), Color(0.24, 0.26, 0.27), false)
 	_box(car, "CarRearBumper", Vector3(1.58, 0.12, 0.12), Vector3(0, 0.34, 1.68), Color(0.24, 0.26, 0.27), false)
+
+func _build_moving_traffic() -> void:
+	# One low-speed traffic car follows the road axis and reverses at each end of the visible block.
+	traffic_car = Node3D.new()
+	traffic_car.name = "MovingTrafficHatchback"
+	traffic_car.position = Vector3(-5.8, 0.0, 20.15)
+	traffic_car.rotation.y = -PI / 2.0
+	add_child(traffic_car)
+	_box(traffic_car, "TrafficCarBody", Vector3(3.15, 0.52, 1.52), Vector3(0, 0.55, 0), Color(0.62, 0.25, 0.16), false)
+	_box(traffic_car, "TrafficCarHood", Vector3(0.82, 0.15, 1.42), Vector3(1.05, 0.82, 0), Color(0.7, 0.29, 0.18), false)
+	_box(traffic_car, "TrafficCarTrunk", Vector3(0.58, 0.14, 1.38), Vector3(-1.18, 0.81, 0), Color(0.58, 0.22, 0.15), false)
+	_box(traffic_car, "TrafficCarCabin", Vector3(1.48, 0.56, 1.12), Vector3(-0.05, 1.02, 0), Color(0.12, 0.23, 0.29), false)
+	_box(traffic_car, "TrafficCarFrontGlass", Vector3(0.035, 0.36, 0.94), Vector3(0.58, 1.08, 0), Color(0.36, 0.55, 0.62), false)
+	_box(traffic_car, "TrafficCarRearGlass", Vector3(0.035, 0.34, 0.92), Vector3(-0.66, 1.08, 0), Color(0.32, 0.5, 0.58), false)
+	for side in [-1.0, 1.0]:
+		_box(traffic_car, "TrafficCarSideWindow_" + str(side), Vector3(0.9, 0.31, 0.035), Vector3(-0.05, 1.08, side * 0.57), Color(0.3, 0.48, 0.56), false)
+		for axle_x in [-1.02, 1.02]:
+			var wheel := MeshInstance3D.new()
+			wheel.name = "TrafficWheel_" + str(side) + "_" + str(axle_x)
+			var wheel_mesh := CylinderMesh.new()
+			wheel_mesh.top_radius = 0.28
+			wheel_mesh.bottom_radius = 0.28
+			wheel_mesh.height = 0.16
+			wheel.mesh = wheel_mesh
+			wheel.material_override = _material(Color(0.07, 0.075, 0.08))
+			wheel.position = Vector3(axle_x, 0.3, side * 0.79)
+			wheel.rotation_degrees.x = 90.0
+			traffic_car.add_child(wheel)
+	_box(traffic_car, "TrafficHeadlightLeft", Vector3(0.12, 0.12, 0.3), Vector3(1.58, 0.62, -0.43), Color(0.98, 0.84, 0.56), false)
+	_box(traffic_car, "TrafficHeadlightRight", Vector3(0.12, 0.12, 0.3), Vector3(1.58, 0.62, 0.43), Color(0.98, 0.84, 0.56), false)
+	_box(traffic_car, "TrafficTaillightLeft", Vector3(0.1, 0.13, 0.28), Vector3(-1.59, 0.62, -0.43), Color(0.72, 0.12, 0.1), false)
+	_box(traffic_car, "TrafficTaillightRight", Vector3(0.1, 0.13, 0.28), Vector3(-1.59, 0.62, 0.43), Color(0.72, 0.12, 0.1), false)
+
+func _update_moving_traffic(delta: float) -> void:
+	if not is_instance_valid(traffic_car):
+		return
+	traffic_car.position.x += traffic_direction * 1.8 * delta
+	if traffic_car.position.x >= 5.6:
+		traffic_car.position.x = 5.6
+		traffic_direction = -1.0
+		traffic_car.rotation.y = PI / 2.0
+	elif traffic_car.position.x <= -5.8:
+		traffic_car.position.x = -5.8
+		traffic_direction = 1.0
+		traffic_car.rotation.y = -PI / 2.0
 
 func _build_npc_residents() -> void:
 	# First resident: a simple pedestrian who walks between two safe points in the courtyard.
@@ -731,6 +779,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(_delta: float) -> void:
 	_update_npc_residents(_delta)
+	_update_moving_traffic(_delta)
 	if not is_instance_valid(player):
 		return
 	var input_dir := Vector2(
