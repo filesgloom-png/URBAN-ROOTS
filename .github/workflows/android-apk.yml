@@ -63,6 +63,12 @@ jobs:
       - name: Run headless gameplay smoke test
         run: godot --headless --path . --quit-after 3
 
+      - name: Prepare Android debug keystore
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          sed -i 's|keystore/debug=""|keystore/debug="/home/runner/.android/debug.keystore"|' export_presets.cfg
+
       - name: Export Android debug APK
         run: |
           mkdir -p build
