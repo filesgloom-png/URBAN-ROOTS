@@ -1,0 +1,72 @@
+name: URBAN ROOTS Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: urban-roots-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install Godot 4.5.1
+        run: |
+          mkdir -p "$HOME/godot" "$HOME/.local/share/godot/export_templates/4.5.1.stable"
+          wget -q https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip -O /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d "$HOME/godot"
+          sudo install -m 0755 "$HOME/godot/Godot_v4.5.1-stable_linux.x86_64" /usr/local/bin/godot
+          wget -q https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz -O /tmp/godot-templates.tpz
+          unzip -q /tmp/godot-templates.tpz -d /tmp/godot-templates
+          cp -a /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/4.5.1.stable/"
+          godot --version
+
+      - name: Validate project scripts
+        run: |
+          godot --headless --path . --editor --quit
+
+      - name: Export Android debug APK
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-debug "Android" build/URBAN-ROOTS-debug.apk
+
+      - name: Verify APK
+        run: |
+          test -s build/URBAN-ROOTS-debug.apk
+          file build/URBAN-ROOTS-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging build/URBAN-ROOTS-debug.apk | head -n 8
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: URBAN-ROOTS-debug
+          path: build/URBAN-ROOTS-debug.apk
+          if-no-files-found: error
+          retention-days: 14
