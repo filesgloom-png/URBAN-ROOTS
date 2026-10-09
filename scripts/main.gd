@@ -23,14 +23,18 @@ var look_finger := -1
 var look_last := Vector2.ZERO
 var status_label: Label
 var movement_label: Label
+var stamina_label: Label
 var interaction_hint: Label
 var interact_button: Button
 var ceiling_glow: OmniLight3D
 var ceiling_fixture: MeshInstance3D
 var switch_visual: MeshInstance3D
 var tv_screen: MeshInstance3D
+var fridge_visual: MeshInstance3D
 var light_is_on := true
 var tv_is_on := false
+var fridge_is_open := false
+var stamina := 100.0
 var interaction_target := ""
 
 func _ready() -> void:
@@ -136,7 +140,8 @@ func _build_room() -> void:
 	_box(self, "WindowMullionVertical", Vector3(0.08, 1.42, 0.1), Vector3(-5.78, 1.95, -1.2), Color(0.25, 0.25, 0.24), false)
 	_box(self, "WindowMullionHorizontal", Vector3(0.08, 0.1, 2.42), Vector3(-5.78, 1.95, -1.2), Color(0.25, 0.25, 0.24), false)
 	_box(self, "KitchenCounter", Vector3(2.8, 0.9, 0.75), Vector3(-3.9, 0.45, 2.5), Color(0.5, 0.5, 0.46))
-	_box(self, "Fridge", Vector3(0.85, 2.0, 0.8), Vector3(-5.0, 1.0, 3.6), Color(0.72, 0.75, 0.76))
+	fridge_visual = _box(self, "Fridge", Vector3(0.85, 2.0, 0.8), Vector3(-5.0, 1.0, 3.6), Color(0.72, 0.75, 0.76))
+	_box(self, "FridgeHandle", Vector3(0.055, 0.55, 0.07), Vector3(-4.55, 1.05, 3.62), Color(0.35, 0.38, 0.4), false)
 	_box(self, "LampStem", Vector3(0.08, 1.1, 0.08), Vector3(4.5, 1.05, 0.1), trim_mat)
 	_box(self, "LampShade", Vector3(0.55, 0.18, 0.55), Vector3(4.5, 1.65, 0.1), Color(0.9, 0.75, 0.48), false)
 	# Small lived-in details: bedside table, wall art, media unit, plant and kitchen fixtures.
@@ -250,7 +255,7 @@ func _build_ui() -> void:
 	var panel := ColorRect.new()
 	panel.color = Color(0.025, 0.04, 0.055, 0.72)
 	panel.position = Vector2(20, 18)
-	panel.size = Vector2(390, 72)
+	panel.size = Vector2(390, 100)
 	layer.add_child(panel)
 	var title := Label.new()
 	title.text = "URBAN ROOTS  /  PROTOTYPE 0.1"
@@ -264,6 +269,13 @@ func _build_ui() -> void:
 	status_label.add_theme_font_size_override("font_size", 15)
 	status_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.84))
 	layer.add_child(status_label)
+	stamina_label = Label.new()
+	stamina_label.name = "StaminaStatus"
+	stamina_label.text = "ЭНЕРГИЯ  •  100%"
+	stamina_label.position = Vector2(36, 77)
+	stamina_label.add_theme_font_size_override("font_size", 15)
+	stamina_label.add_theme_color_override("font_color", Color(0.65, 0.88, 0.66))
+	layer.add_child(stamina_label)
 	var motion_panel := ColorRect.new()
 	motion_panel.name = "MovementStatusPanel"
 	motion_panel.color = Color(0.025, 0.04, 0.055, 0.72)
@@ -357,12 +369,18 @@ func _on_joystick_value_changed(value: Vector2) -> void:
 
 func _update_interaction_target() -> void:
 	interaction_target = ""
-	var switch_distance := player.global_position.distance_to(Vector3(1.2, 1.25, 5.7))
-	var tv_distance := player.global_position.distance_to(Vector3(0.1, 1.12, -3.65))
-	if switch_distance <= 2.25 and switch_distance <= tv_distance:
-		interaction_target = "light"
-	elif tv_distance <= 2.25:
-		interaction_target = "tv"
+	var distances := {
+		"light": player.global_position.distance_to(Vector3(1.2, 1.25, 5.7)),
+		"tv": player.global_position.distance_to(Vector3(0.1, 1.12, -3.65)),
+		"bed": player.global_position.distance_to(Vector3(-3.4, 0.7, -3.1)),
+		"sofa": player.global_position.distance_to(Vector3(2.8, 0.7, 1.5)),
+		"fridge": player.global_position.distance_to(Vector3(-5.0, 1.0, 3.6))
+	}
+	var nearest_distance := 2.25
+	for target in distances:
+		if distances[target] <= nearest_distance:
+			nearest_distance = distances[target]
+			interaction_target = target
 	if is_instance_valid(interact_button):
 		interact_button.disabled = interaction_target == ""
 	if is_instance_valid(interaction_hint):
@@ -371,6 +389,12 @@ func _update_interaction_target() -> void:
 				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("выключить свет" if light_is_on else "включить свет")
 			"tv":
 				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("выключить телевизор" if tv_is_on else "включить телевизор")
+			"bed":
+				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: восстановить энергию на кровати"
+			"sofa":
+				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: отдохнуть на диване"
+			"fridge":
+				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("закрыть холодильник" if fridge_is_open else "открыть холодильник")
 			_:
 				interaction_hint.text = "Подойди к выключателю или телевизору"
 
@@ -397,6 +421,16 @@ func _interact_with_target() -> void:
 				tv_screen.material_override = screen_material
 			if is_instance_valid(status_label):
 				status_label.text = "Телевизор включён" if tv_is_on else "Телевизор выключен"
+		"bed", "sofa":
+			stamina = 100.0
+			if is_instance_valid(status_label):
+				status_label.text = "Ты отдохнул. Энергия восстановлена"
+		"fridge":
+			fridge_is_open = not fridge_is_open
+			if is_instance_valid(fridge_visual):
+				fridge_visual.material_override = _material(Color(0.42, 0.49, 0.52) if fridge_is_open else Color(0.72, 0.75, 0.76))
+			if is_instance_valid(status_label):
+				status_label.text = "Холодильник открыт" if fridge_is_open else "Холодильник закрыт"
 	_update_interaction_target()
 
 func _toggle_camera() -> void:
@@ -452,7 +486,16 @@ func _physics_process(_delta: float) -> void:
 		var basis := Basis(Vector3.UP, yaw)
 		direction = basis * Vector3(input_dir.x, 0, input_dir.y)
 		player.rotation.y = lerp_angle(player.rotation.y, atan2(-direction.x, -direction.z), 0.2)
+	if sprinting and input_dir.length() > 0.05 and stamina > 0.0:
+		stamina = maxf(0.0, stamina - _delta * 22.0)
+	else:
+		stamina = minf(100.0, stamina + _delta * 12.0)
+	if stamina <= 0.0:
+		sprinting = false
 	var current_speed := RUN_SPEED if sprinting else WALK_SPEED
+	if is_instance_valid(stamina_label):
+		stamina_label.text = "ЭНЕРГИЯ  •  %d%%" % int(round(stamina))
+		stamina_label.add_theme_color_override("font_color", Color(0.95, 0.55, 0.42) if stamina < 25.0 else Color(0.65, 0.88, 0.66))
 	if is_instance_valid(movement_label):
 		movement_label.text = "БЕГ  •  6.6" if sprinting else "ХОДЬБА  •  4.2"
 		movement_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.38) if sprinting else Color(0.72, 0.9, 0.82))
