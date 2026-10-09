@@ -206,13 +206,13 @@ func _build_room() -> void:
 		_box(self, "Mailbox_" + str(mailbox_y), Vector3(0.42, 0.22, 0.14), Vector3(-1.42, mailbox_y, 6.28), Color(0.38, 0.4, 0.39), false)
 		_box(self, "MailboxSlot_" + str(mailbox_y), Vector3(0.22, 0.025, 0.025), Vector3(-1.42, mailbox_y + 0.025, 6.195), Color(0.12, 0.14, 0.14), false)
 	# Exterior starter zone: ground, entrance porch, pavement, street and simple props.
-	_box(self, "OutdoorGround", Vector3(22.0, 0.2, 24.0), Vector3(0, -0.16, 17.0), Color(0.23, 0.34, 0.22))
+	_box(self, "OutdoorGround", Vector3(30.0, 0.2, 24.0), Vector3(0, -0.16, 17.0), Color(0.23, 0.34, 0.22))
 	_box(self, "EntrancePorch", Vector3(5.0, 0.12, 2.4), Vector3(0, -0.015, 7.1), Color(0.48, 0.47, 0.43))
 	_box(self, "FrontWalkway", Vector3(3.8, 0.08, 7.5), Vector3(0, -0.035, 11.8), Color(0.48, 0.49, 0.47))
 	_box(self, "WalkwayEdgeLeft", Vector3(0.12, 0.12, 7.6), Vector3(-1.98, -0.01, 11.8), Color(0.31, 0.32, 0.3), false)
 	_box(self, "WalkwayEdgeRight", Vector3(0.12, 0.12, 7.6), Vector3(1.98, -0.01, 11.8), Color(0.31, 0.32, 0.3), false)
-	_box(self, "StreetAsphalt", Vector3(22.0, 0.08, 5.0), Vector3(0, -0.045, 21.0), Color(0.16, 0.18, 0.19))
-	_box(self, "Curb", Vector3(22.0, 0.16, 0.28), Vector3(0, 0.02, 18.35), Color(0.58, 0.57, 0.52))
+	_box(self, "StreetAsphalt", Vector3(18.0, 0.08, 5.0), Vector3(0, -0.045, 21.0), Color(0.16, 0.18, 0.19))
+	_box(self, "Curb", Vector3(18.0, 0.16, 0.28), Vector3(0, 0.02, 18.35), Color(0.58, 0.57, 0.52))
 	_box(self, "RoadMarking", Vector3(7.0, 0.015, 0.12), Vector3(0, 0.005, 21.0), Color(0.85, 0.82, 0.68), false)
 	_box(self, "CourtyardTreeTrunk", Vector3(0.32, 1.8, 0.32), Vector3(-7.0, 0.8, 11.5), Color(0.3, 0.2, 0.13), false)
 	_box(self, "CourtyardTreeCrown", Vector3(2.2, 2.0, 2.2), Vector3(-7.0, 2.4, 11.5), Color(0.18, 0.35, 0.2), false)
@@ -237,6 +237,29 @@ func _build_room() -> void:
 	_box(self, "PlanterShrub", Vector3(1.12, 0.62, 0.52), Vector3(-5.2, 0.58, 15.0), Color(0.2, 0.39, 0.23), false)
 	_box(self, "BenchSupportLeft", Vector3(0.12, 0.48, 0.12), Vector3(4.35, 0.25, 12.5), Color(0.22, 0.23, 0.22), false)
 	_box(self, "BenchSupportRight", Vector3(0.12, 0.48, 0.12), Vector3(5.65, 0.25, 12.5), Color(0.22, 0.23, 0.22), false)
+	# Expanded street block: sidewalks and two low-rise neighboring buildings beyond the road edges.
+	_box(self, "LeftSidewalk", Vector3(3.2, 0.06, 5.4), Vector3(-10.7, -0.025, 21.0), Color(0.43, 0.44, 0.42))
+	_box(self, "RightSidewalk", Vector3(3.2, 0.06, 5.4), Vector3(10.7, -0.025, 21.0), Color(0.43, 0.44, 0.42))
+	_box(self, "LeftBuildingMain", Vector3(4.8, 5.8, 3.8), Vector3(-13.0, 2.9, 23.4), Color(0.57, 0.54, 0.48))
+	_box(self, "LeftBuildingLowerBand", Vector3(4.86, 0.22, 3.9), Vector3(-13.0, 1.35, 21.42), Color(0.34, 0.36, 0.35), false)
+	_box(self, "LeftBuildingRoofEdge", Vector3(5.0, 0.18, 4.0), Vector3(-13.0, 5.82, 23.4), Color(0.36, 0.36, 0.33), false)
+	_box(self, "RightBuildingMain", Vector3(4.8, 5.0, 3.8), Vector3(13.0, 2.5, 23.4), Color(0.49, 0.54, 0.55))
+	_box(self, "RightBuildingLowerBand", Vector3(4.86, 0.22, 3.9), Vector3(13.0, 1.25, 21.42), Color(0.31, 0.35, 0.36), false)
+	_box(self, "RightBuildingRoofEdge", Vector3(5.0, 0.18, 4.0), Vector3(13.0, 5.02, 23.4), Color(0.32, 0.36, 0.37), false)
+	# Street-facing windows and storefront-style ground-floor panels.
+	for facade_x in [-14.0, -12.0, 12.0, 14.0]:
+		var facade_is_left := facade_x < 0.0
+		var facade_z := 21.43 if facade_is_left else 21.43
+		_box(self, "StreetWindowFrame_" + str(facade_x), Vector3(0.92, 1.18, 0.09), Vector3(facade_x, 3.35 if facade_is_left else 2.95, facade_z), Color(0.25, 0.28, 0.29), false)
+		_box(self, "StreetWindowGlass_" + str(facade_x), Vector3(0.74, 0.98, 0.04), Vector3(facade_x, 3.35 if facade_is_left else 2.95, facade_z - 0.055), Color(0.29, 0.48, 0.57), false)
+		_box(self, "StreetWindowDivider_" + str(facade_x), Vector3(0.055, 0.94, 0.035), Vector3(facade_x, 3.35 if facade_is_left else 2.95, facade_z - 0.08), Color(0.21, 0.23, 0.24), false)
+	_box(self, "LeftStorefrontSign", Vector3(2.0, 0.38, 0.1), Vector3(-13.0, 1.75, 21.38), Color(0.17, 0.25, 0.25), false)
+	_box(self, "LeftStorefrontSignAccent", Vector3(0.12, 0.24, 0.035), Vector3(-13.65, 1.75, 21.315), Color(0.79, 0.62, 0.35), false)
+	_box(self, "RightEntranceDoor", Vector3(0.9, 2.0, 0.08), Vector3(13.0, 1.05, 21.38), Color(0.25, 0.22, 0.18), false)
+	_box(self, "RightEntranceDoorGlass", Vector3(0.58, 1.05, 0.035), Vector3(13.0, 1.25, 21.32), Color(0.3, 0.49, 0.56), false)
+	# Road markings continue along the wider street, while the central walking route stays clear.
+	_box(self, "RoadMarkingLeft", Vector3(5.0, 0.015, 0.1), Vector3(-5.2, 0.005, 21.0), Color(0.85, 0.82, 0.68), false)
+	_box(self, "RoadMarkingRight", Vector3(5.0, 0.015, 0.1), Vector3(5.2, 0.005, 21.0), Color(0.85, 0.82, 0.68), false)
 	ceiling_glow = OmniLight3D.new()
 	ceiling_glow.name = "WarmCeilingGlow"
 	ceiling_glow.position = Vector3(0, 2.85, -0.2)
