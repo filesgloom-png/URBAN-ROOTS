@@ -31,6 +31,8 @@ var ceiling_fixture: MeshInstance3D
 var switch_visual: MeshInstance3D
 var tv_screen: MeshInstance3D
 var fridge_visual: MeshInstance3D
+var door_pivot: Node3D
+var door_is_open := false
 var light_is_on := true
 var tv_is_on := false
 var fridge_is_open := false
@@ -105,7 +107,18 @@ func _build_room() -> void:
 	_box(self, "BackWallBaseboard", Vector3(11.6, 0.16, 0.06), Vector3(0, 0.08, -5.86), Color(0.29, 0.25, 0.21), false)
 	_box(self, "LeftWallBaseboard", Vector3(0.06, 0.16, 11.6), Vector3(-5.86, 0.08, 0), Color(0.29, 0.25, 0.21), false)
 	_box(self, "RightWallBaseboard", Vector3(0.06, 0.16, 11.6), Vector3(5.86, 0.08, 0), Color(0.29, 0.25, 0.21), false)
-	_box(self, "Door", Vector3(1.7, 2.5, 0.08), Vector3(0, 1.25, 5.88), Color(0.34, 0.22, 0.14), false)
+	door_pivot = Node3D.new()
+	door_pivot.name = "ApartmentDoorPivot"
+	door_pivot.position = Vector3(-0.82, 1.25, 5.88)
+	add_child(door_pivot)
+	var door_mesh := BoxMesh.new()
+	door_mesh.size = Vector3(1.7, 2.5, 0.08)
+	var door_visual := MeshInstance3D.new()
+	door_visual.name = "Door"
+	door_visual.mesh = door_mesh
+	door_visual.position = Vector3(0.85, 0, 0)
+	door_visual.material_override = _material(Color(0.34, 0.22, 0.14))
+	door_pivot.add_child(door_visual)
 	_box(self, "DoorFrameLeft", Vector3(0.12, 2.55, 0.14), Vector3(-0.92, 1.27, 5.82), Color(0.25, 0.18, 0.13), false)
 	_box(self, "DoorFrameRight", Vector3(0.12, 2.55, 0.14), Vector3(0.92, 1.27, 5.82), Color(0.25, 0.18, 0.13), false)
 	_box(self, "DoorFrameTop", Vector3(1.95, 0.12, 0.14), Vector3(0, 2.54, 5.82), Color(0.25, 0.18, 0.13), false)
@@ -164,6 +177,21 @@ func _build_room() -> void:
 	_box(self, "StoveBurnerRight", Vector3(0.26, 0.025, 0.26), Vector3(-4.27, 1.095, 2.38), Color(0.08, 0.09, 0.1), false)
 	_box(self, "SinkBasin", Vector3(0.65, 0.06, 0.45), Vector3(-3.25, 1.04, 2.48), Color(0.38, 0.43, 0.45), false)
 	ceiling_fixture = _box(self, "CeilingLight", Vector3(1.0, 0.08, 0.45), Vector3(0, 3.0, -0.2), Color(0.94, 0.84, 0.64), false)
+	# Exterior starter zone: ground, entrance porch, pavement, street and simple props.
+	_box(self, "OutdoorGround", Vector3(22.0, 0.2, 24.0), Vector3(0, -0.16, 17.0), Color(0.23, 0.34, 0.22))
+	_box(self, "EntrancePorch", Vector3(5.0, 0.12, 2.4), Vector3(0, -0.015, 7.1), Color(0.48, 0.47, 0.43))
+	_box(self, "FrontWalkway", Vector3(3.8, 0.08, 7.5), Vector3(0, -0.035, 11.8), Color(0.48, 0.49, 0.47))
+	_box(self, "WalkwayEdgeLeft", Vector3(0.12, 0.12, 7.6), Vector3(-1.98, -0.01, 11.8), Color(0.31, 0.32, 0.3), false)
+	_box(self, "WalkwayEdgeRight", Vector3(0.12, 0.12, 7.6), Vector3(1.98, -0.01, 11.8), Color(0.31, 0.32, 0.3), false)
+	_box(self, "StreetAsphalt", Vector3(22.0, 0.08, 5.0), Vector3(0, -0.045, 21.0), Color(0.16, 0.18, 0.19))
+	_box(self, "Curb", Vector3(22.0, 0.16, 0.28), Vector3(0, 0.02, 18.35), Color(0.58, 0.57, 0.52))
+	_box(self, "RoadMarking", Vector3(7.0, 0.015, 0.12), Vector3(0, 0.005, 21.0), Color(0.85, 0.82, 0.68), false)
+	_box(self, "CourtyardTreeTrunk", Vector3(0.32, 1.8, 0.32), Vector3(-7.0, 0.8, 11.5), Color(0.3, 0.2, 0.13), false)
+	_box(self, "CourtyardTreeCrown", Vector3(2.2, 2.0, 2.2), Vector3(-7.0, 2.4, 11.5), Color(0.18, 0.35, 0.2), false)
+	_box(self, "CourtyardBenchSeat", Vector3(1.8, 0.12, 0.5), Vector3(5.0, 0.52, 12.5), Color(0.42, 0.28, 0.17), false)
+	_box(self, "CourtyardBenchBack", Vector3(1.8, 0.75, 0.12), Vector3(5.0, 0.9, 12.72), Color(0.42, 0.28, 0.17), false)
+	_box(self, "StreetLampPole", Vector3(0.12, 3.2, 0.12), Vector3(7.5, 1.6, 15.5), Color(0.2, 0.22, 0.23), false)
+	_box(self, "StreetLampHead", Vector3(0.65, 0.14, 0.35), Vector3(7.5, 3.2, 15.5), Color(0.9, 0.8, 0.58), false)
 	ceiling_glow = OmniLight3D.new()
 	ceiling_glow.name = "WarmCeilingGlow"
 	ceiling_glow.position = Vector3(0, 2.85, -0.2)
@@ -374,7 +402,8 @@ func _update_interaction_target() -> void:
 		"tv": player.global_position.distance_to(Vector3(0.1, 1.12, -3.65)),
 		"bed": player.global_position.distance_to(Vector3(-3.4, 0.7, -3.1)),
 		"sofa": player.global_position.distance_to(Vector3(2.8, 0.7, 1.5)),
-		"fridge": player.global_position.distance_to(Vector3(-5.0, 1.0, 3.6))
+		"fridge": player.global_position.distance_to(Vector3(-5.0, 1.0, 3.6)),
+		"door": player.global_position.distance_to(Vector3(0.0, 1.25, 5.65))
 	}
 	var nearest_distance := 2.25
 	for target in distances:
@@ -395,6 +424,8 @@ func _update_interaction_target() -> void:
 				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: отдохнуть на диване"
 			"fridge":
 				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("закрыть холодильник" if fridge_is_open else "открыть холодильник")
+			"door":
+				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("закрыть входную дверь" if door_is_open else "открыть дверь и выйти во двор")
 			_:
 				interaction_hint.text = "Подойди к выключателю или телевизору"
 
@@ -431,6 +462,12 @@ func _interact_with_target() -> void:
 				fridge_visual.material_override = _material(Color(0.42, 0.49, 0.52) if fridge_is_open else Color(0.72, 0.75, 0.76))
 			if is_instance_valid(status_label):
 				status_label.text = "Холодильник открыт" if fridge_is_open else "Холодильник закрыт"
+		"door":
+			door_is_open = not door_is_open
+			if is_instance_valid(door_pivot):
+				door_pivot.rotation.y = -1.35 if door_is_open else 0.0
+			if is_instance_valid(status_label):
+				status_label.text = "Дверь открыта — выходи во двор" if door_is_open else "Входная дверь закрыта"
 	_update_interaction_target()
 
 func _toggle_camera() -> void:
