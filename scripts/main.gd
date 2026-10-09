@@ -194,6 +194,17 @@ func _build_room() -> void:
 		_box(self, "FacadeWindowFrame_" + str(window_x), Vector3(1.25, 1.35, 0.1), Vector3(window_x, 3.15, 5.91), Color(0.28, 0.29, 0.28), false)
 		_box(self, "FacadeWindowGlass_" + str(window_x), Vector3(1.05, 1.15, 0.045), Vector3(window_x, 3.15, 5.84), Color(0.3, 0.48, 0.58), false)
 		_box(self, "FacadeWindowDivider_" + str(window_x), Vector3(0.055, 1.12, 0.04), Vector3(window_x, 3.15, 5.805), Color(0.22, 0.24, 0.24), false)
+	# Entrance landing and shallow steps: walkable transition from the apartment door to the courtyard.
+	_box(self, "EntranceLanding", Vector3(3.2, 0.14, 0.9), Vector3(0, 0.015, 6.45), Color(0.52, 0.51, 0.47))
+	_box(self, "EntranceStepTop", Vector3(3.0, 0.12, 0.42), Vector3(0, -0.005, 6.95), Color(0.49, 0.48, 0.44))
+	_box(self, "EntranceStepMiddle", Vector3(3.4, 0.10, 0.42), Vector3(0, -0.025, 7.28), Color(0.46, 0.45, 0.42))
+	_box(self, "EntranceStepBottom", Vector3(3.8, 0.08, 0.42), Vector3(0, -0.045, 7.6), Color(0.43, 0.43, 0.4))
+	# Intercom and mailboxes beside the entrance, kept clear of the door swing and walking line.
+	_box(self, "EntranceIntercomPanel", Vector3(0.28, 0.62, 0.09), Vector3(1.35, 1.35, 6.29), Color(0.19, 0.23, 0.24), false)
+	_box(self, "EntranceIntercomScreen", Vector3(0.15, 0.12, 0.025), Vector3(1.35, 1.48, 6.235), Color(0.32, 0.62, 0.57), false)
+	for mailbox_y in [1.15, 1.42, 1.69]:
+		_box(self, "Mailbox_" + str(mailbox_y), Vector3(0.42, 0.22, 0.14), Vector3(-1.42, mailbox_y, 6.28), Color(0.38, 0.4, 0.39), false)
+		_box(self, "MailboxSlot_" + str(mailbox_y), Vector3(0.22, 0.025, 0.025), Vector3(-1.42, mailbox_y + 0.025, 6.195), Color(0.12, 0.14, 0.14), false)
 	# Exterior starter zone: ground, entrance porch, pavement, street and simple props.
 	_box(self, "OutdoorGround", Vector3(22.0, 0.2, 24.0), Vector3(0, -0.16, 17.0), Color(0.23, 0.34, 0.22))
 	_box(self, "EntrancePorch", Vector3(5.0, 0.12, 2.4), Vector3(0, -0.015, 7.1), Color(0.48, 0.47, 0.43))
@@ -209,6 +220,23 @@ func _build_room() -> void:
 	_box(self, "CourtyardBenchBack", Vector3(1.8, 0.75, 0.12), Vector3(5.0, 0.9, 12.72), Color(0.42, 0.28, 0.17), false)
 	_box(self, "StreetLampPole", Vector3(0.12, 3.2, 0.12), Vector3(7.5, 1.6, 15.5), Color(0.2, 0.22, 0.23), false)
 	_box(self, "StreetLampHead", Vector3(0.65, 0.14, 0.35), Vector3(7.5, 3.2, 15.5), Color(0.9, 0.8, 0.58), false)
+	# Courtyard layout: side paths, low perimeter fencing and a wide gate aligned with the street.
+	_box(self, "PathToTree", Vector3(5.6, 0.035, 1.55), Vector3(-4.9, -0.035, 11.7), Color(0.42, 0.44, 0.41), false)
+	_box(self, "PathToBench", Vector3(4.2, 0.035, 1.5), Vector3(3.0, -0.035, 12.45), Color(0.42, 0.44, 0.41), false)
+	for fence_z in [9.0, 11.0, 13.0, 15.0, 16.4]:
+		_box(self, "LeftFencePost_" + str(fence_z), Vector3(0.16, 0.95, 0.16), Vector3(-9.2, 0.475, fence_z), Color(0.31, 0.33, 0.32), false)
+		_box(self, "RightFencePost_" + str(fence_z), Vector3(0.16, 0.95, 0.16), Vector3(9.2, 0.475, fence_z), Color(0.31, 0.33, 0.32), false)
+	_box(self, "LeftFenceRailUpper", Vector3(0.12, 0.12, 7.6), Vector3(-9.2, 0.82, 12.7), Color(0.31, 0.33, 0.32), false)
+	_box(self, "LeftFenceRailLower", Vector3(0.1, 0.1, 7.6), Vector3(-9.2, 0.35, 12.7), Color(0.31, 0.33, 0.32), false)
+	_box(self, "RightFenceRailUpper", Vector3(0.12, 0.12, 7.6), Vector3(9.2, 0.82, 12.7), Color(0.31, 0.33, 0.32), false)
+	_box(self, "RightFenceRailLower", Vector3(0.1, 0.1, 7.6), Vector3(9.2, 0.35, 12.7), Color(0.31, 0.33, 0.32), false)
+	# Small outdoor details to make the courtyard feel lived in without blocking traversal.
+	_box(self, "CourtyardWasteBin", Vector3(0.58, 0.82, 0.58), Vector3(7.0, 0.41, 10.0), Color(0.28, 0.33, 0.32))
+	_box(self, "WasteBinLid", Vector3(0.64, 0.08, 0.64), Vector3(7.0, 0.86, 10.0), Color(0.19, 0.23, 0.23), false)
+	_box(self, "CourtyardPlanter", Vector3(1.35, 0.32, 0.7), Vector3(-5.2, 0.16, 15.0), Color(0.42, 0.31, 0.23))
+	_box(self, "PlanterShrub", Vector3(1.12, 0.62, 0.52), Vector3(-5.2, 0.58, 15.0), Color(0.2, 0.39, 0.23), false)
+	_box(self, "BenchSupportLeft", Vector3(0.12, 0.48, 0.12), Vector3(4.35, 0.25, 12.5), Color(0.22, 0.23, 0.22), false)
+	_box(self, "BenchSupportRight", Vector3(0.12, 0.48, 0.12), Vector3(5.65, 0.25, 12.5), Color(0.22, 0.23, 0.22), false)
 	ceiling_glow = OmniLight3D.new()
 	ceiling_glow.name = "WarmCeilingGlow"
 	ceiling_glow.position = Vector3(0, 2.85, -0.2)
