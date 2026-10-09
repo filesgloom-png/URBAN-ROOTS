@@ -37,6 +37,15 @@ jobs:
         run: |
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
+      - name: Generate Android launcher icon PNGs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          convert icon.svg -resize 192x192! icon.png
+          convert icon.svg -resize 432x432! icon-foreground.png
+          convert -size 432x432 xc:'#10251f' icon-background.png
+          file icon.png icon-foreground.png icon-background.png
+
       - name: Install Godot 4.5.1
         run: |
           mkdir -p "$HOME/godot" "$HOME/.local/share/godot/export_templates/4.5.1.stable"
