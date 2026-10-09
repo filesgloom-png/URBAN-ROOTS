@@ -129,6 +129,14 @@ func _build_room() -> void:
 	_box(self, "StoveBurnerRight", Vector3(0.26, 0.025, 0.26), Vector3(-4.27, 1.095, 2.38), Color(0.08, 0.09, 0.1), false)
 	_box(self, "SinkBasin", Vector3(0.65, 0.06, 0.45), Vector3(-3.25, 1.04, 2.48), Color(0.38, 0.43, 0.45), false)
 	_box(self, "CeilingLight", Vector3(1.0, 0.08, 0.45), Vector3(0, 3.0, -0.2), Color(0.94, 0.84, 0.64), false)
+	var ceiling_glow := OmniLight3D.new()
+	ceiling_glow.name = "WarmCeilingGlow"
+	ceiling_glow.position = Vector3(0, 2.85, -0.2)
+	ceiling_glow.light_color = Color(1.0, 0.78, 0.52)
+	ceiling_glow.light_energy = 1.15
+	ceiling_glow.omni_range = 8.0
+	ceiling_glow.shadow_enabled = false
+	add_child(ceiling_glow)
 
 func _build_player() -> void:
 	player = CharacterBody3D.new()
