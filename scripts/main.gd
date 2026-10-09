@@ -481,12 +481,28 @@ func _update_npc_residents(delta: float) -> void:
 		var target_point: Vector3 = points[target_index]
 		var to_target := target_point - npc.global_position
 		to_target.y = 0.0
-		if to_target.length() < 0.3:
+		var player_nearby := is_instance_valid(player) and npc.global_position.distance_to(player.global_position) < 1.9
+		if player_nearby:
+			var toward_player := player.global_position - npc.global_position
+			toward_player.y = 0.0
+			if toward_player.length() > 0.05:
+				npc.rotation.y = atan2(-toward_player.x, -toward_player.z)
+			npc.velocity.x = 0.0
+			npc.velocity.z = 0.0
+			if is_instance_valid(npc_status_label):
+				npc_status_label.text = "ЖИТЕЛЬ  •  ПРИВЕТСТВУЕТ ИГРОКА"
+		else:
+			if is_instance_valid(npc_status_label):
+				npc_status_label.text = "ЖИТЕЛИ  •  ПРОГУЛКА ПО РАЙОНУ"
+		if to_target.length() < 0.3 and not player_nearby:
 			target_index = 0 if target_index == 1 else 1
 			resident["target"] = target_index
 			to_target = points[target_index] - npc.global_position
 			to_target.y = 0.0
-		if to_target.length() > 0.05:
+		if player_nearby:
+			npc.velocity.x = 0.0
+			npc.velocity.z = 0.0
+		elif to_target.length() > 0.05:
 			var direction := to_target.normalized()
 			npc.velocity.x = direction.x * float(resident["speed"])
 			npc.velocity.z = direction.z * float(resident["speed"])
