@@ -271,7 +271,7 @@ func _build_room() -> void:
 	_box(self, "RightBuildingRoofEdge", Vector3(5.0, 0.18, 4.0), Vector3(13.0, 5.02, 23.4), Color(0.32, 0.36, 0.37), false)
 	# Street-facing windows and storefront-style ground-floor panels.
 	for facade_x in [-14.0, -12.0, 12.0, 14.0]:
-		var facade_is_left := facade_x < 0.0
+		var facade_is_left: bool = facade_x < 0.0
 		var facade_z := 21.43 if facade_is_left else 21.43
 		_box(self, "StreetWindowFrame_" + str(facade_x), Vector3(0.92, 1.18, 0.09), Vector3(facade_x, 3.35 if facade_is_left else 2.95, facade_z), Color(0.25, 0.28, 0.29), false)
 		_box(self, "StreetWindowGlass_" + str(facade_x), Vector3(0.74, 0.98, 0.04), Vector3(facade_x, 3.35 if facade_is_left else 2.95, facade_z - 0.055), Color(0.29, 0.48, 0.57), false)
