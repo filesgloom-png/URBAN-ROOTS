@@ -353,6 +353,14 @@ func _build_moving_traffic() -> void:
 	_box(traffic_car, "TrafficHeadlightRight", Vector3(0.12, 0.12, 0.3), Vector3(1.58, 0.62, 0.43), Color(0.98, 0.84, 0.56), false)
 	_box(traffic_car, "TrafficTaillightLeft", Vector3(0.1, 0.13, 0.28), Vector3(-1.59, 0.62, -0.43), Color(0.72, 0.12, 0.1), false)
 	_box(traffic_car, "TrafficTaillightRight", Vector3(0.1, 0.13, 0.28), Vector3(-1.59, 0.62, 0.43), Color(0.72, 0.12, 0.1), false)
+	# A clearly marked pedestrian crossing and a small stop area make the street feel functional.
+	for stripe_x in [-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0]:
+		_box(self, "CrosswalkStripe_" + str(stripe_x), Vector3(0.58, 0.025, 1.15), Vector3(stripe_x, 0.012, 19.05), Color(0.86, 0.85, 0.78), false)
+	_box(self, "BusStopPole", Vector3(0.09, 2.15, 0.09), Vector3(8.25, 1.05, 22.2), Color(0.23, 0.27, 0.28), false)
+	_box(self, "BusStopSign", Vector3(0.48, 0.62, 0.08), Vector3(8.25, 2.15, 22.2), Color(0.18, 0.43, 0.52), false)
+	_box(self, "BusStopSymbol", Vector3(0.2, 0.3, 0.025), Vector3(8.25, 2.15, 22.145), Color(0.9, 0.88, 0.78), false)
+	_box(self, "StreetBenchSeat", Vector3(1.55, 0.12, 0.42), Vector3(7.55, 0.48, 22.6), Color(0.39, 0.27, 0.18), false)
+	_box(self, "StreetBenchBack", Vector3(1.55, 0.62, 0.1), Vector3(7.55, 0.81, 22.78), Color(0.39, 0.27, 0.18), false)
 
 func _update_moving_traffic(delta: float) -> void:
 	if not is_instance_valid(traffic_car):
@@ -482,6 +490,7 @@ func _update_npc_residents(delta: float) -> void:
 		var to_target := target_point - npc.global_position
 		to_target.y = 0.0
 		var player_nearby := is_instance_valid(player) and npc.global_position.distance_to(player.global_position) < 1.9
+		var car_nearby := is_instance_valid(traffic_car) and npc.global_position.distance_to(traffic_car.global_position) < 5.2
 		if player_nearby:
 			var toward_player := player.global_position - npc.global_position
 			toward_player.y = 0.0
@@ -491,6 +500,13 @@ func _update_npc_residents(delta: float) -> void:
 			npc.velocity.z = 0.0
 			if is_instance_valid(npc_status_label):
 				npc_status_label.text = "ЖИТЕЛЬ  •  ПРИВЕТСТВУЕТ ИГРОКА"
+		elif car_nearby:
+			var toward_car := traffic_car.global_position - npc.global_position
+			toward_car.y = 0.0
+			if toward_car.length() > 0.05:
+				npc.rotation.y = atan2(-toward_car.x, -toward_car.z)
+			if is_instance_valid(npc_status_label):
+				npc_status_label.text = "ПЕШЕХОД  •  ВНИМАНИЕ, МАШИНА"
 		else:
 			if is_instance_valid(npc_status_label):
 				npc_status_label.text = "ЖИТЕЛИ  •  ПРОГУЛКА ПО РАЙОНУ"
@@ -499,7 +515,7 @@ func _update_npc_residents(delta: float) -> void:
 			resident["target"] = target_index
 			to_target = points[target_index] - npc.global_position
 			to_target.y = 0.0
-		if player_nearby:
+		if player_nearby or car_nearby:
 			npc.velocity.x = 0.0
 			npc.velocity.z = 0.0
 		elif to_target.length() > 0.05:
