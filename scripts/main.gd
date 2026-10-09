@@ -3,7 +3,6 @@ extends Node3D
 const WALK_SPEED := 4.2
 const LOOK_SENSITIVITY := 0.006
 const ROOM_SIZE := Vector3(12.0, 3.2, 12.0)
-const JOYSTICK_RADIUS := 72.0
 
 var player: CharacterBody3D
 var camera_pivot: Node3D
@@ -12,9 +11,6 @@ var first_person := false
 var pitch := -0.12
 var yaw := 0.0
 var joystick_vector := Vector2.ZERO
-var joystick_center := Vector2.ZERO
-var joystick_knob := Vector2.ZERO
-var joystick_touch_index := -1
 var look_finger := -1
 var look_last := Vector2.ZERO
 var status_label: Label
@@ -157,16 +153,12 @@ func _build_ui() -> void:
 	layer.add_child(status_label)
 	var joystick := Control.new()
 	joystick.name = "MovementJoystick"
+	joystick.set_script(load("res://scripts/joystick.gd"))
 	joystick.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	joystick.position = Vector2(34, -194)
 	joystick.size = Vector2(174, 174)
-	joystick.mouse_filter = Control.MOUSE_FILTER_STOP
-	joystick.draw.connect(_draw_joystick.bind(joystick))
-	joystick.gui_input.connect(_on_joystick_input)
 	layer.add_child(joystick)
-	joystick_center = joystick.size / 2.0
-	joystick_knob = joystick_center
-	joystick.queue_redraw()
+	joystick.value_changed.connect(_on_joystick_value_changed)
 	var cam_btn := Button.new()
 	cam_btn.text = "КАМЕРА"
 	cam_btn.position = Vector2(-190, -100)
@@ -190,47 +182,8 @@ func _build_ui() -> void:
 	help.add_theme_font_size_override("font_size", 14)
 	layer.add_child(help)
 
-func _draw_joystick(control: Control) -> void:
-	var center := control.size / 2.0
-	control.draw_circle(center, JOYSTICK_RADIUS, Color(0.04, 0.06, 0.08, 0.48))
-	control.draw_arc(center, JOYSTICK_RADIUS, 0.0, TAU, 64, Color(0.78, 0.84, 0.85, 0.8), 3.0, true)
-	control.draw_circle(joystick_knob, 31.0, Color(0.55, 0.72, 0.76, 0.9))
-	control.draw_arc(joystick_knob, 31.0, 0.0, TAU, 48, Color(0.94, 0.96, 0.92, 0.95), 2.0, true)
-
-func _on_joystick_input(event: InputEvent) -> void:
-	var control := get_node("MobileUI/MovementJoystick") as Control
-	if event is InputEventScreenTouch:
-		if event.pressed and joystick_touch_index == -1:
-			joystick_touch_index = event.index
-			_update_joystick(event.position - control.global_position, control)
-		elif not event.pressed and event.index == joystick_touch_index:
-			joystick_touch_index = -1
-			joystick_vector = Vector2.ZERO
-			joystick_knob = joystick_center
-			control.queue_redraw()
-	elif event is InputEventScreenDrag and event.index == joystick_touch_index:
-		_update_joystick(event.position - control.global_position, control)
-	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			joystick_touch_index = -2
-			_update_joystick(event.position, control)
-		else:
-			joystick_touch_index = -1
-			joystick_vector = Vector2.ZERO
-			joystick_knob = joystick_center
-			control.queue_redraw()
-	elif event is InputEventMouseMotion and joystick_touch_index == -2 and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		_update_joystick(event.position, control)
-
-func _update_joystick(local_position: Vector2, control: Control) -> void:
-	var offset := local_position - joystick_center
-	if offset.length() > JOYSTICK_RADIUS:
-		offset = offset.normalized() * JOYSTICK_RADIUS
-	joystick_knob = joystick_center + offset
-	joystick_vector = Vector2(offset.x / JOYSTICK_RADIUS, offset.y / JOYSTICK_RADIUS)
-	if joystick_vector.length() < 0.12:
-		joystick_vector = Vector2.ZERO
-	control.queue_redraw()
+func _on_joystick_value_changed(value: Vector2) -> void:
+	joystick_vector = value
 
 func _toggle_camera() -> void:
 	first_person = not first_person
