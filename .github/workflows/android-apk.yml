@@ -111,18 +111,29 @@ jobs:
 
       - name: Diagnose Android export configuration
         run: |
-          echo "=== Effective Android preset keystore settings ==="
-          grep -E '^keystore/(debug|debug_user|debug_password)=' export_presets.cfg
-          echo "=== Installed Godot Android templates ==="
-          ls -lah "$HOME/.local/share/godot/export_templates/4.5.1.stable/"
+          echo "=== Effective Android preset settings ==="
+          cat export_presets.cfg
           echo "=== Godot Android editor settings ==="
           cat "$HOME/.config/godot/editor_settings-4.5.tres"
-          echo "=== Android SDK essentials ==="
-          test -x "$ANDROID_HOME/platform-tools/adb"
-          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
-          test -d "$ANDROID_HOME/platforms/android-35"
-          echo "Android SDK checks passed"
-
+          echo "=== Java and Android SDK ==="
+          java -version
+          echo "JAVA_HOME=$JAVA_HOME"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -ld "$JAVA_HOME" "$ANDROID_HOME" "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/platforms/android-35" "$ANDROID_HOME/build-tools/35.0.0"
+          echo "=== Export template required files ==="
+          ls -lah "$HOME/.local/share/godot/export_templates/4.5.1.stable/"
+          test -s "$HOME/.local/share/godot/export_templates/4.5.1.stable/android_debug.apk"
+          test -s "$HOME/.local/share/godot/export_templates/4.5.1.stable/android_release.apk"
+          test -s "$HOME/.local/share/godot/export_templates/4.5.1.stable/android_source.zip"
+          echo "=== Imported resources ==="
+          find .godot/imported -maxdepth 1 -type f -printf "%f %s bytes\\n" | sort
+          echo "=== Godot editor diagnostic ==="
+          godot --headless --verbose --path . --editor --quit 2>&1 | tee /tmp/godot-editor-check.log
+          echo "=== Verify required project files ==="
+          test -s scenes/main.tscn
+          test -s icon.png
+          test -s icon-foreground.png
+          test -s icon-background.png
       - name: Export Android debug APK
         run: |
           mkdir -p build
