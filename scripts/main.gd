@@ -5,6 +5,12 @@ const LOOK_SENSITIVITY := 0.006
 const ROOM_SIZE := Vector3(12.0, 3.2, 12.0)
 
 var player: CharacterBody3D
+var avatar_root: Node3D
+var left_arm: MeshInstance3D
+var right_arm: MeshInstance3D
+var left_leg: MeshInstance3D
+var right_leg: MeshInstance3D
+var walk_phase := 0.0
 var camera_pivot: Node3D
 var camera: Camera3D
 var first_person := false
@@ -106,15 +112,61 @@ func _build_player() -> void:
 	player.name = "Player"
 	player.position = Vector3(0, 0.12, 3.5)
 	add_child(player)
-	var capsule := CapsuleMesh.new()
-	capsule.radius = 0.34
-	capsule.height = 1.75
-	var avatar := MeshInstance3D.new()
-	avatar.name = "Avatar"
-	avatar.mesh = capsule
-	avatar.position.y = 0.88
-	avatar.material_override = _material(Color(0.18, 0.38, 0.56))
-	player.add_child(avatar)
+	avatar_root = Node3D.new()
+	avatar_root.name = "Avatar"
+	avatar_root.position.y = 0.12
+	player.add_child(avatar_root)
+	var shirt := _material(Color(0.18, 0.38, 0.56))
+	var pants := _material(Color(0.12, 0.15, 0.19))
+	var skin := _material(Color(0.78, 0.59, 0.43))
+	var torso_mesh := CapsuleMesh.new()
+	torso_mesh.radius = 0.29
+	torso_mesh.height = 0.82
+	var torso := MeshInstance3D.new()
+	torso.name = "Torso"
+	torso.mesh = torso_mesh
+	torso.position.y = 1.05
+	torso.material_override = shirt
+	avatar_root.add_child(torso)
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.22
+	head_mesh.height = 0.44
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	head.mesh = head_mesh
+	head.position.y = 1.66
+	head.material_override = skin
+	avatar_root.add_child(head)
+	var leg_mesh := CapsuleMesh.new()
+	leg_mesh.radius = 0.115
+	leg_mesh.height = 0.62
+	left_leg = MeshInstance3D.new()
+	left_leg.name = "LeftLeg"
+	left_leg.mesh = leg_mesh
+	left_leg.position = Vector3(-0.14, 0.43, 0)
+	left_leg.material_override = pants
+	avatar_root.add_child(left_leg)
+	right_leg = MeshInstance3D.new()
+	right_leg.name = "RightLeg"
+	right_leg.mesh = leg_mesh
+	right_leg.position = Vector3(0.14, 0.43, 0)
+	right_leg.material_override = pants
+	avatar_root.add_child(right_leg)
+	var arm_mesh := CapsuleMesh.new()
+	arm_mesh.radius = 0.09
+	arm_mesh.height = 0.62
+	left_arm = MeshInstance3D.new()
+	left_arm.name = "LeftArm"
+	left_arm.mesh = arm_mesh
+	left_arm.position = Vector3(-0.39, 1.06, 0)
+	left_arm.material_override = shirt
+	avatar_root.add_child(left_arm)
+	right_arm = MeshInstance3D.new()
+	right_arm.name = "RightArm"
+	right_arm.mesh = arm_mesh
+	right_arm.position = Vector3(0.39, 1.06, 0)
+	right_arm.material_override = shirt
+	avatar_root.add_child(right_arm)
 	var shape := CollisionShape3D.new()
 	var capsule_shape := CapsuleShape3D.new()
 	capsule_shape.radius = 0.34
@@ -245,5 +297,17 @@ func _physics_process(_delta: float) -> void:
 	else:
 		player.velocity.y = -0.1
 	player.move_and_slide()
+	var horizontal_speed := Vector2(player.velocity.x, player.velocity.z).length()
+	if horizontal_speed > 0.12:
+		walk_phase += _delta * horizontal_speed * 2.4
+	else:
+		walk_phase = lerpf(walk_phase, 0.0, minf(1.0, _delta * 8.0))
+	var swing := sin(walk_phase) * minf(0.65, horizontal_speed / WALK_SPEED * 0.65)
+	if is_instance_valid(left_leg):
+		left_leg.rotation.x = swing
+		right_leg.rotation.x = -swing
+		left_arm.rotation.x = -swing * 0.7
+		right_arm.rotation.x = swing * 0.7
+		avatar_root.position.y = 0.12 + (absf(sin(walk_phase * 2.0)) * 0.035 if horizontal_speed > 0.12 else 0.0)
 	camera_pivot.rotation.y = yaw
 	camera_pivot.rotation.x = pitch
