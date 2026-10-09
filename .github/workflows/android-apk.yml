@@ -41,11 +41,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick
-          convert icon.svg -resize 192x192! icon.png
-          convert icon.svg -resize 432x432! icon-foreground.png
-          convert -size 432x432 xc:'#10251f' icon-background.png
+          convert icon.svg -resize 192x192! -background none -alpha on -depth 8 PNG32:icon.png
+          convert icon.svg -resize 432x432! -background none -alpha on -depth 8 PNG32:icon-foreground.png
+          convert -size 432x432 xc:'#10251f' -alpha on -depth 8 PNG32:icon-background.png
           file icon.png icon-foreground.png icon-background.png
           identify -format "%f: %wx%h PNG\n" icon.png icon-foreground.png icon-background.png
+          for image in icon.png icon-foreground.png icon-background.png; do
+            identify -format "%f: depth=%z channels=%[channels]\n" "$image"
+            test "$(identify -format "%z" "$image")" = "8"
+          done
           test -s icon.png
           test -s icon-foreground.png
           test -s icon-background.png
