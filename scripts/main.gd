@@ -33,6 +33,7 @@ var tv_screen: MeshInstance3D
 var fridge_visual: MeshInstance3D
 var door_pivot: Node3D
 var door_is_open := false
+var apartment_zone_label: Label
 var light_is_on := true
 var tv_is_on := false
 var fridge_is_open := false
@@ -177,6 +178,20 @@ func _build_room() -> void:
 	_box(self, "StoveBurnerRight", Vector3(0.26, 0.025, 0.26), Vector3(-4.27, 1.095, 2.38), Color(0.08, 0.09, 0.1), false)
 	_box(self, "SinkBasin", Vector3(0.65, 0.06, 0.45), Vector3(-3.25, 1.04, 2.48), Color(0.38, 0.43, 0.45), false)
 	ceiling_fixture = _box(self, "CeilingLight", Vector3(1.0, 0.08, 0.45), Vector3(0, 3.0, -0.2), Color(0.94, 0.84, 0.64), false)
+	# Apartment building exterior and the first courtyard block.
+	_box(self, "BuildingFacade", Vector3(12.0, 3.25, 0.32), Vector3(0, 3.2, 6.12), Color(0.63, 0.61, 0.55))
+	_box(self, "FacadeLowerBand", Vector3(12.0, 0.28, 0.38), Vector3(0, 1.55, 6.0), Color(0.37, 0.38, 0.36), false)
+	_box(self, "FacadeUpperBand", Vector3(12.0, 0.16, 0.38), Vector3(0, 4.55, 6.0), Color(0.43, 0.43, 0.4), false)
+	_box(self, "EntranceCanopy", Vector3(3.2, 0.18, 1.25), Vector3(0, 2.85, 6.85), Color(0.28, 0.31, 0.32))
+	_box(self, "EntranceCanopySupportLeft", Vector3(0.12, 1.25, 0.12), Vector3(-1.35, 2.25, 7.3), Color(0.28, 0.3, 0.3), false)
+	_box(self, "EntranceCanopySupportRight", Vector3(0.12, 1.25, 0.12), Vector3(1.35, 2.25, 7.3), Color(0.28, 0.3, 0.3), false)
+	_box(self, "EntranceSign", Vector3(1.9, 0.36, 0.08), Vector3(0, 2.55, 6.28), Color(0.16, 0.22, 0.23), false)
+	_box(self, "EntranceSignAccent", Vector3(0.08, 0.22, 0.035), Vector3(-0.72, 2.55, 6.225), Color(0.79, 0.62, 0.35), false)
+	# Ground-floor windows and facade trim.
+	for window_x in [-4.2, -2.4, 2.4, 4.2]:
+		_box(self, "FacadeWindowFrame_" + str(window_x), Vector3(1.25, 1.35, 0.1), Vector3(window_x, 3.15, 5.91), Color(0.28, 0.29, 0.28), false)
+		_box(self, "FacadeWindowGlass_" + str(window_x), Vector3(1.05, 1.15, 0.045), Vector3(window_x, 3.15, 5.84), Color(0.3, 0.48, 0.58), false)
+		_box(self, "FacadeWindowDivider_" + str(window_x), Vector3(0.055, 1.12, 0.04), Vector3(window_x, 3.15, 5.805), Color(0.22, 0.24, 0.24), false)
 	# Exterior starter zone: ground, entrance porch, pavement, street and simple props.
 	_box(self, "OutdoorGround", Vector3(22.0, 0.2, 24.0), Vector3(0, -0.16, 17.0), Color(0.23, 0.34, 0.22))
 	_box(self, "EntrancePorch", Vector3(5.0, 0.12, 2.4), Vector3(0, -0.015, 7.1), Color(0.48, 0.47, 0.43))
@@ -297,6 +312,17 @@ func _build_ui() -> void:
 	status_label.add_theme_font_size_override("font_size", 15)
 	status_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.84))
 	layer.add_child(status_label)
+	apartment_zone_label = Label.new()
+	apartment_zone_label.name = "ZoneLabel"
+	apartment_zone_label.text = "ДОМ 01  •  КВАРТИРА"
+	apartment_zone_label.anchor_left = 0.5
+	apartment_zone_label.anchor_right = 0.5
+	apartment_zone_label.position = Vector2(-150, 18)
+	apartment_zone_label.size = Vector2(300, 28)
+	apartment_zone_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	apartment_zone_label.add_theme_font_size_override("font_size", 16)
+	apartment_zone_label.add_theme_color_override("font_color", Color(0.93, 0.82, 0.58))
+	layer.add_child(apartment_zone_label)
 	stamina_label = Label.new()
 	stamina_label.name = "StaminaStatus"
 	stamina_label.text = "ЭНЕРГИЯ  •  100%"
@@ -397,6 +423,9 @@ func _on_joystick_value_changed(value: Vector2) -> void:
 
 func _update_interaction_target() -> void:
 	interaction_target = ""
+	var is_outside := player.global_position.z > 6.2
+	if is_instance_valid(apartment_zone_label):
+		apartment_zone_label.text = "ДВОР  •  УЛИЦА" if is_outside else "ДОМ 01  •  КВАРТИРА"
 	var distances := {
 		"light": player.global_position.distance_to(Vector3(1.2, 1.25, 5.7)),
 		"tv": player.global_position.distance_to(Vector3(0.1, 1.12, -3.65)),
