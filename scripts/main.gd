@@ -49,6 +49,7 @@ func _ready() -> void:
 	_build_room()
 	_build_player()
 	_build_npc_residents()
+	_build_second_pedestrian()
 	_build_moving_traffic()
 	_build_ui()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -365,6 +366,59 @@ func _update_moving_traffic(delta: float) -> void:
 		traffic_car.position.x = -5.8
 		traffic_direction = 1.0
 		traffic_car.rotation.y = -PI / 2.0
+
+func _build_second_pedestrian() -> void:
+	# A second resident walks a longer route along the pavement, away from the first resident's courtyard loop.
+	var npc := CharacterBody3D.new()
+	npc.name = "StreetPedestrian"
+	npc.position = Vector3(-10.4, 0.12, 20.7)
+	add_child(npc)
+	var body_shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.26
+	capsule.height = 1.62
+	body_shape.shape = capsule
+	body_shape.position.y = 0.81
+	npc.add_child(body_shape)
+	var visual := Node3D.new()
+	visual.name = "PedestrianVisual"
+	npc.add_child(visual)
+	var torso_mesh := CapsuleMesh.new()
+	torso_mesh.radius = 0.23
+	torso_mesh.height = 0.74
+	var torso := MeshInstance3D.new()
+	torso.name = "Torso"
+	torso.mesh = torso_mesh
+	torso.position.y = 1.0
+	torso.material_override = _material(Color(0.2, 0.43, 0.56))
+	visual.add_child(torso)
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.18
+	head_mesh.height = 0.36
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	head.mesh = head_mesh
+	head.position.y = 1.6
+	head.material_override = _material(Color(0.72, 0.52, 0.38))
+	visual.add_child(head)
+	var leg_mesh := CapsuleMesh.new()
+	leg_mesh.radius = 0.085
+	leg_mesh.height = 0.54
+	for leg_x in [-0.11, 0.11]:
+		var leg := MeshInstance3D.new()
+		leg.name = "Leg_" + str(leg_x)
+		leg.mesh = leg_mesh
+		leg.position = Vector3(leg_x, 0.36, 0)
+		leg.material_override = _material(Color(0.12, 0.15, 0.18))
+		visual.add_child(leg)
+	npc_residents.append({
+		"node": npc,
+		"visual": visual,
+		"points": [Vector3(-10.4, 0.12, 20.7), Vector3(-10.4, 0.12, 21.6)],
+		"target": 1,
+		"speed": 0.85,
+		"phase": 1.4
+	})
 
 func _build_npc_residents() -> void:
 	# First resident: a simple pedestrian who walks between two safe points in the courtyard.
