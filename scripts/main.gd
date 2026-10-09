@@ -23,6 +23,15 @@ var look_finger := -1
 var look_last := Vector2.ZERO
 var status_label: Label
 var movement_label: Label
+var interaction_hint: Label
+var interact_button: Button
+var ceiling_glow: OmniLight3D
+var ceiling_fixture: MeshInstance3D
+var switch_visual: MeshInstance3D
+var tv_screen: MeshInstance3D
+var light_is_on := true
+var tv_is_on := false
+var interaction_target := ""
 
 func _ready() -> void:
 	_build_environment()
@@ -97,7 +106,7 @@ func _build_room() -> void:
 	_box(self, "DoorFrameRight", Vector3(0.12, 2.55, 0.14), Vector3(0.92, 1.27, 5.82), Color(0.25, 0.18, 0.13), false)
 	_box(self, "DoorFrameTop", Vector3(1.95, 0.12, 0.14), Vector3(0, 2.54, 5.82), Color(0.25, 0.18, 0.13), false)
 	_box(self, "LightSwitchPlate", Vector3(0.18, 0.28, 0.035), Vector3(1.2, 1.25, 5.82), Color(0.82, 0.8, 0.72), false)
-	_box(self, "LightSwitchToggle", Vector3(0.07, 0.12, 0.025), Vector3(1.2, 1.25, 5.79), Color(0.35, 0.37, 0.34), false)
+	switch_visual = _box(self, "LightSwitchToggle", Vector3(0.07, 0.12, 0.025), Vector3(1.2, 1.25, 5.79), Color(0.35, 0.37, 0.34), false)
 	_box(self, "EntryMat", Vector3(1.5, 0.035, 0.72), Vector3(0, 0.025, 5.25), Color(0.22, 0.29, 0.29), false)
 	_box(self, "EntryMatStripeLeft", Vector3(0.045, 0.012, 0.62), Vector3(-0.56, 0.048, 5.25), Color(0.68, 0.56, 0.38), false)
 	_box(self, "EntryMatStripeRight", Vector3(0.045, 0.012, 0.62), Vector3(0.56, 0.048, 5.25), Color(0.68, 0.56, 0.38), false)
@@ -138,7 +147,7 @@ func _build_room() -> void:
 	_box(self, "WallPictureCanvas", Vector3(1.08, 0.68, 0.025), Vector3(1.2, 2.05, -5.72), Color(0.36, 0.53, 0.48), false)
 	_box(self, "PictureSun", Vector3(0.24, 0.24, 0.03), Vector3(1.45, 2.17, -5.69), Color(0.9, 0.67, 0.36), false)
 	_box(self, "TVStand", Vector3(2.2, 0.58, 0.55), Vector3(0.1, 0.29, -3.7), Color(0.28, 0.22, 0.18))
-	_box(self, "TVScreen", Vector3(1.65, 0.95, 0.1), Vector3(0.1, 1.12, -3.95), Color(0.045, 0.075, 0.09), false)
+	tv_screen = _box(self, "TVScreen", Vector3(1.65, 0.95, 0.1), Vector3(0.1, 1.12, -3.95), Color(0.045, 0.075, 0.09), false)
 	_box(self, "TVStandShelf", Vector3(1.7, 0.06, 0.4), Vector3(0.1, 0.15, -3.68), Color(0.4, 0.31, 0.23), false)
 	_box(self, "PlantPot", Vector3(0.42, 0.38, 0.42), Vector3(5.0, 0.19, 2.55), Color(0.48, 0.25, 0.18))
 	_box(self, "PlantStem", Vector3(0.1, 0.65, 0.1), Vector3(5.0, 0.65, 2.55), Color(0.2, 0.36, 0.23), false)
@@ -149,8 +158,8 @@ func _build_room() -> void:
 	_box(self, "StoveBurnerLeft", Vector3(0.26, 0.025, 0.26), Vector3(-4.63, 1.095, 2.38), Color(0.08, 0.09, 0.1), false)
 	_box(self, "StoveBurnerRight", Vector3(0.26, 0.025, 0.26), Vector3(-4.27, 1.095, 2.38), Color(0.08, 0.09, 0.1), false)
 	_box(self, "SinkBasin", Vector3(0.65, 0.06, 0.45), Vector3(-3.25, 1.04, 2.48), Color(0.38, 0.43, 0.45), false)
-	_box(self, "CeilingLight", Vector3(1.0, 0.08, 0.45), Vector3(0, 3.0, -0.2), Color(0.94, 0.84, 0.64), false)
-	var ceiling_glow := OmniLight3D.new()
+	ceiling_fixture = _box(self, "CeilingLight", Vector3(1.0, 0.08, 0.45), Vector3(0, 3.0, -0.2), Color(0.94, 0.84, 0.64), false)
+	ceiling_glow = OmniLight3D.new()
 	ceiling_glow.name = "WarmCeilingGlow"
 	ceiling_glow.position = Vector3(0, 2.85, -0.2)
 	ceiling_glow.light_color = Color(1.0, 0.78, 0.52)
@@ -305,8 +314,34 @@ func _build_ui() -> void:
 	run_btn.button_down.connect(func(): sprinting = true)
 	run_btn.button_up.connect(func(): sprinting = false)
 	layer.add_child(run_btn)
+	interact_button = Button.new()
+	interact_button.name = "InteractButton"
+	interact_button.text = "ДЕЙСТВИЕ"
+	interact_button.position = Vector2(-535, -100)
+	interact_button.size = Vector2(155, 58)
+	interact_button.anchor_left = 1.0
+	interact_button.anchor_right = 1.0
+	interact_button.anchor_top = 1.0
+	interact_button.anchor_bottom = 1.0
+	interact_button.disabled = true
+	interact_button.add_theme_font_size_override("font_size", 17)
+	interact_button.pressed.connect(_interact_with_target)
+	layer.add_child(interact_button)
+	interaction_hint = Label.new()
+	interaction_hint.name = "InteractionHint"
+	interaction_hint.text = "Подойди к выключателю или телевизору"
+	interaction_hint.anchor_left = 0.5
+	interaction_hint.anchor_right = 0.5
+	interaction_hint.anchor_top = 1.0
+	interaction_hint.anchor_bottom = 1.0
+	interaction_hint.position = Vector2(-230, -62)
+	interaction_hint.size = Vector2(460, 24)
+	interaction_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	interaction_hint.add_theme_font_size_override("font_size", 16)
+	interaction_hint.add_theme_color_override("font_color", Color(0.96, 0.86, 0.62))
+	layer.add_child(interaction_hint)
 	var help := Label.new()
-	help.text = "Джойстик — ходьба • БЕГ — ускорение • свайп справа — обзор"
+	help.text = "Джойстик — движение • БЕГ — ускорение • свайп справа — обзор"
 	help.anchor_left = 0.5
 	help.anchor_right = 0.5
 	help.anchor_top = 1.0
@@ -319,6 +354,50 @@ func _build_ui() -> void:
 
 func _on_joystick_value_changed(value: Vector2) -> void:
 	joystick_vector = value
+
+func _update_interaction_target() -> void:
+	interaction_target = ""
+	var switch_distance := player.global_position.distance_to(Vector3(1.2, 1.25, 5.7))
+	var tv_distance := player.global_position.distance_to(Vector3(0.1, 1.12, -3.65))
+	if switch_distance <= 2.25 and switch_distance <= tv_distance:
+		interaction_target = "light"
+	elif tv_distance <= 2.25:
+		interaction_target = "tv"
+	if is_instance_valid(interact_button):
+		interact_button.disabled = interaction_target == ""
+	if is_instance_valid(interaction_hint):
+		match interaction_target:
+			"light":
+				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("выключить свет" if light_is_on else "включить свет")
+			"tv":
+				interaction_hint.text = "Нажми «ДЕЙСТВИЕ»: " + ("выключить телевизор" if tv_is_on else "включить телевизор")
+			_:
+				interaction_hint.text = "Подойди к выключателю или телевизору"
+
+func _interact_with_target() -> void:
+	match interaction_target:
+		"light":
+			light_is_on = not light_is_on
+			if is_instance_valid(ceiling_glow):
+				ceiling_glow.visible = light_is_on
+			if is_instance_valid(ceiling_fixture):
+				ceiling_fixture.material_override = _material(Color(0.94, 0.84, 0.64) if light_is_on else Color(0.25, 0.26, 0.27))
+			if is_instance_valid(switch_visual):
+				switch_visual.material_override = _material(Color(0.35, 0.37, 0.34) if light_is_on else Color(0.85, 0.62, 0.3))
+			if is_instance_valid(status_label):
+				status_label.text = "Свет включён" if light_is_on else "Свет выключен"
+		"tv":
+			tv_is_on = not tv_is_on
+			if is_instance_valid(tv_screen):
+				var screen_material := _material(Color(0.12, 0.55, 0.72) if tv_is_on else Color(0.045, 0.075, 0.09), 0.35)
+				if tv_is_on:
+					screen_material.emission_enabled = true
+					screen_material.emission = Color(0.08, 0.32, 0.48)
+					screen_material.emission_energy_multiplier = 0.8
+				tv_screen.material_override = screen_material
+			if is_instance_valid(status_label):
+				status_label.text = "Телевизор включён" if tv_is_on else "Телевизор выключен"
+	_update_interaction_target()
 
 func _toggle_camera() -> void:
 	first_person = not first_person
@@ -384,6 +463,7 @@ func _physics_process(_delta: float) -> void:
 	else:
 		player.velocity.y = -0.1
 	player.move_and_slide()
+	_update_interaction_target()
 	var horizontal_speed := Vector2(player.velocity.x, player.velocity.z).length()
 	if horizontal_speed > 0.12:
 		walk_phase += _delta * horizontal_speed * 2.4
