@@ -50,8 +50,6 @@ jobs:
           godot --headless --path . --editor --quit
 
       - name: Export Android debug APK
-        env:
-          ANDROID_SDK_ROOT: ${{ runner.temp }}/android-sdk
         run: |
           mkdir -p build
           godot --headless --path . --export-debug "Android" build/URBAN-ROOTS-debug.apk
