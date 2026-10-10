@@ -202,8 +202,8 @@ func _build_room() -> void:
 	_box(self, "SinkBasin", Vector3(0.65, 0.06, 0.45), Vector3(-3.25, 1.04, 2.48), Color(0.38, 0.43, 0.45), false)
 	ceiling_fixture = _box(self, "CeilingLight", Vector3(1.0, 0.08, 0.45), Vector3(0, 3.0, -0.2), Color(0.94, 0.84, 0.64), false)
 	# Apartment building exterior and the first courtyard block.
-	_box(self, "BuildingFacadeLeft", Vector3(5.0, 3.25, 0.32), Vector3(-3.5, 3.2, 6.12), Color(0.63, 0.61, 0.55))
-	_box(self, "BuildingFacadeRight", Vector3(5.0, 3.25, 0.32), Vector3(3.5, 3.2, 6.12), Color(0.63, 0.61, 0.55))
+	_box(self, "BuildingFacadeLeft", Vector3(4.8, 2.5, 0.32), Vector3(-3.6, 1.25, 6.12), Color(0.63, 0.61, 0.55))
+	_box(self, "BuildingFacadeRight", Vector3(4.8, 2.5, 0.32), Vector3(3.6, 1.25, 6.12), Color(0.63, 0.61, 0.55))
 	_box(self, "BuildingFacadeDoorHeader", Vector3(2.0, 0.7, 0.32), Vector3(0, 2.85, 6.12), Color(0.63, 0.61, 0.55))
 	_box(self, "FacadeLowerBand", Vector3(12.0, 0.28, 0.38), Vector3(0, 1.55, 6.0), Color(0.37, 0.38, 0.36), false)
 	_box(self, "FacadeUpperBand", Vector3(12.0, 0.16, 0.38), Vector3(0, 4.55, 6.0), Color(0.43, 0.43, 0.4), false)
