@@ -20,6 +20,7 @@ var pitch := -0.12
 var yaw := PI
 var joystick_vector := Vector2.ZERO
 var look_finger := -1
+var camera_look_area: Control
 var look_last := Vector2.ZERO
 var status_label: Label
 var movement_label: Label
@@ -775,6 +776,25 @@ func _build_ui() -> void:
 	joystick.size = Vector2(152, 152)
 	layer.add_child(joystick)
 	joystick.value_changed.connect(_on_joystick_value_changed)
+
+	# A dedicated touch-only viewport for camera look. Movement stick touches are
+	# handled by the joystick and never enter the camera input path.
+	camera_look_area = Control.new()
+	camera_look_area.name = "CameraLookArea"
+	camera_look_area.set_script(load("res://scripts/look_area.gd"))
+	camera_look_area.anchor_left = 0.42
+	camera_look_area.anchor_right = 1.0
+	camera_look_area.anchor_top = 0.18
+	camera_look_area.anchor_bottom = 0.78
+	camera_look_area.offset_left = 0.0
+	camera_look_area.offset_right = 0.0
+	camera_look_area.offset_top = 0.0
+	camera_look_area.offset_bottom = 0.0
+	camera_look_area.mouse_filter = Control.MOUSE_FILTER_STOP
+	camera_look_area.z_index = -1
+	layer.add_child(camera_look_area)
+	camera_look_area.look_delta.connect(_on_camera_look_delta)
+
 	var cam_btn := Button.new()
 	cam_btn.text = "КАМЕРА"
 	cam_btn.position = Vector2(-142, -82)
@@ -825,7 +845,7 @@ func _build_ui() -> void:
 	interaction_hint.add_theme_color_override("font_color", Color(0.96, 0.86, 0.62))
 	layer.add_child(interaction_hint)
 	var help := Label.new()
-	help.text = "Джойстик — движение • БЕГ — ускорение • свайп справа — обзор"
+	help.text = "ЛЕВЫЙ джойстик — движение • СВАЙП СПРАВА — камера • БЕГ — ускорение"
 	help.anchor_left = 0.5
 	help.anchor_right = 0.5
 	help.anchor_top = 1.0
@@ -956,22 +976,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_V:
 			_toggle_camera()
-	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		if event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
-			yaw -= event.relative.x * LOOK_SENSITIVITY
-			pitch = clampf(pitch - event.relative.y * LOOK_SENSITIVITY, -1.1, 0.65)
-	if event is InputEventScreenTouch:
-		if event.pressed:
-			if event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
-				look_finger = event.index
-				look_last = event.position
-		elif event.index == look_finger:
-			look_finger = -1
-	if event is InputEventScreenDrag and event.index == look_finger:
-		var delta: Vector2 = event.position - look_last
-		look_last = event.position
-		yaw -= delta.x * LOOK_SENSITIVITY
-		pitch = clampf(pitch - delta.y * LOOK_SENSITIVITY, -1.1, 0.65)
+
+func _on_camera_look_delta(delta: Vector2) -> void:
+	yaw -= delta.x * LOOK_SENSITIVITY
+	pitch = clampf(pitch - delta.y * LOOK_SENSITIVITY, -1.1, 0.65)
 
 func _physics_process(_delta: float) -> void:
 	_update_npc_residents(_delta)
